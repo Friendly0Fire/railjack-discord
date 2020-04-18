@@ -6,7 +6,7 @@ const path = require('path');
 const Discord = require('discord.js');
 const Commando = require('discord.js-commando');
 const sqlite = require('sqlite');
-const { WarframeProfileManager } = require('./profile');
+const { WarframeProfileManager } = require('./utils/profile');
 
 // Load settings
 let config = {};
@@ -20,24 +20,11 @@ if(!config.token) {
     return;
 }
 
-const profileManager = new WarframeProfileManager(path.join(__dirname, 'profiles.db'));
-
 const client = new Commando.Client({
     'owner': config.owner || ''
 });
 
-client.on('ready', () => {
-    console.log('Bot initialized.');
-});
-
-client.on('guildMemberAdd', async member => {
-    await member.setNickname("❔" + member.displayName);
-    const channel = member.guild.channels.cache.find(ch => ch.name === 'welcome');
-    if(!channel) return;
-
-    await channel.send(`Welcome to the server, ${member}`);
-});
-
+// Commando configuration
 client.registry
     .registerGroups([
         ['wf', 'Warframe-related commands'],
@@ -49,5 +36,14 @@ client.registry
 client.setProvider(
         sqlite.open(path.join(__dirname, 'settings.db')).then(db => new Commando.SQLiteProvider(db))
     ).catch(console.error);
+
+// Profile Manager initialization
+const profileManager = new WarframeProfileManager(path.join(__dirname, 'profiles.db'));
+profileManager.setupClient(client);
+
+client.on('ready', () => {
+    console.log('Bot initialized.');
+});
+//client.on('error', console.error);
 
 client.login(config.token);

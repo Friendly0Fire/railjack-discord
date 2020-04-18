@@ -8,6 +8,7 @@
     "axios": "^0.19.2",
     "better-sqlite3": "^5.0.0",
     "cheerio": "^1.0.0-rc.3",
+    "common-tags": "^1.8.0",
     "discord.js": "^12.2.0",
     "discord.js-commando": "git+https://github.com/discordjs/Commando.git",
     "sqlite": "^3.0.0",
