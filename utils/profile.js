@@ -1,27 +1,19 @@
 'use strict';
 
 // Load libraries
-const fs = require('fs');
-const path = require('path');
-const sqlite = require('better-sqlite3');
 const uuid = require('uuid');
 const axios = require('axios').default;
 const cheerio = require('cheerio');
 
 class WarframeProfileManager {
     static instance = undefined;
-    defaultVerifiedRole = "verified";
-    defaultPlatform = "PC";
 
-    constructor(dbName) {
+    constructor(db) {
         if(WarframeProfileManager.instance != undefined)
             throw "Instance already exists!";
 
-        this.dbName = dbName || "./profiles.db";
-        this.db = sqlite(this.dbName);
+        this.db = db;
         this.db.prepare('CREATE TABLE IF NOT EXISTS profiles(userId TEXT PRIMARY KEY, token TEXT, platform TEXT, ign TEXT, verified INTEGER)').run();
-        this.db.prepare('CREATE TABLE IF NOT EXISTS guilds(guildId TEXT PRIMARY KEY, verifiedRole TEXT DEFAULT ?, defaultPlatform TEXT DEFAULT ?)')
-               .run(defaultVerifiedRole, defaultPlatform);
 
         WarframeProfileManager.instance = this;
     }
@@ -48,9 +40,7 @@ class WarframeProfileManager {
                 this._notifyUnverified(member);
         });
 
-        client.on('guildCreate', async guild => {
-            this.initializeGuildData(guild.id);
-        });
+        client.on('guildCreate', this.initializeGuildData);
     }
 
     async _loadProfilePage(profileUrl) {
@@ -108,30 +98,6 @@ class WarframeProfileManager {
         return priorEntry;
     }
 
-    async initializeGuildData(guildId, client) {
-        this.db.prepare("INSERT INTO guilds VALUES (?)").run(guildId);
-
-        const guild = client.guilds.get(guildId);
-
-        const members = await guild.members.fetch();
-
-        members.each(async member => {
-            const userData = this.getUserData(member.user.id);
-            if(userData.verified)
-            await this._applyVerificationSingle(userData, guild);
-            else
-                await this._notifyUnverified(member);
-        });
-    }
-
-    getGuildData(guildId) {
-        const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guildId);
-        if(guildData == undefined)
-            throw "Guild does not exist!";
-
-        return guildData;
-    }
-
     async _applyVerificationSingle(userData, guild) {
         if(!userData.verified)
             throw "User is not verified!";
@@ -142,9 +108,15 @@ class WarframeProfileManager {
         let nick = userData.ign;
         if(userData.platform != guildData.defaultPlatform)
             nick += ` [${userData.platform}]`;
+
         await member.setNickname(nick);
-        const verifiedRole = guild.roles.cache.find(ro => ro.name === guildData.verifiedRole);
+
+        const verifiedRole = guild.roles.cache.get(guildData.verifiedRole);
         await member.roles.add(verifiedRole);
+
+        const platformRole = guild.roles.cache.get(guildData[userData.platform.toLowerCase() + "Role"]);
+        if(platformRole != undefined)
+            await member.roles.add(platformRole);
     }
 
     async applyVerification(userId, client) {

@@ -6,6 +6,7 @@ const path = require('path');
 const Discord = require('discord.js');
 const Commando = require('discord.js-commando');
 const sqlite = require('sqlite');
+const bsqlite = require('better-sqlite3');
 const { WarframeProfileManager } = require('./utils/profile');
 
 // Load settings
@@ -38,8 +39,11 @@ client.setProvider(
     ).catch(console.error);
 
 // Profile Manager initialization
-const profileManager = new WarframeProfileManager(path.join(__dirname, 'profiles.db'));
+const db = bsqlite(path.join(__dirname, 'wf.db'));
+const profileManager = new WarframeProfileManager(db);
 profileManager.setupClient(client);
+const guildManager = new WarframeGuildManager(db);
+guildManager.setupClient(client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');

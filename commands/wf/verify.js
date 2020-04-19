@@ -9,7 +9,7 @@ module.exports = class VerifyCommand extends Commando.Command {
             group: 'wf',
             memberName: 'verify',
             description: 'Verifies Warframe username and platform given a profile URL.',
-            examples: ['verify', 'verify https://forums.warframe.com/profile/881615-friendly0fire/'],
+            examples: ['verify', 'verify https://forums.warframe.com/profile/123456-abcdef/'],
             guildOnly: false,
             args: [
                 {

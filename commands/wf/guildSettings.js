@@ -1,0 +1,38 @@
+const Commando = require("discord.js-commando");
+const stripIndents = require('common-tags').stripIndents;
+const { WarframeGuildManager } = require('../../utils/guilds');
+
+module.exports = class GuildSettingsCommand extends Commando.Command {
+    constructor(client) {
+        super(client, {
+            name: 'settings',
+            group: 'wf',
+            memberName: 'settings',
+            description: 'Allows administrators to change server settings for the bot.',
+            examples: ['settings verifiedRole Verified'],
+            guildOnly: true,
+            userPermissions: ['ADMINISTRATOR'],
+            args: [
+                {
+                    key: 'setting',
+                    type: 'string',
+                    prompt: 'What setting do you want to change?'
+                },
+                {
+                    key: 'value',
+                    type: 'string',
+                    prompt: 'What is the new value?'
+                }
+            ]
+        });
+    }
+
+    async run(msg, { setting, newValue }) {
+        let data = {};
+        data[setting] = newValue;
+
+        WarframeGuildManager.instance.setGuildData(msg.guild.id, data);
+        await WarframeGuildManager.instance.refreshGuild(msg.guild);
+        return msg.reply(`Success! Setting ${setting} has been set to ${newValue}.`);
+    }
+}
