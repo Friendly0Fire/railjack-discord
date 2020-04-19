@@ -10,7 +10,7 @@ module.exports = class VerifyCommand extends Commando.Command {
             memberName: 'verify',
             description: 'Verifies Warframe username and platform given a profile URL.',
             examples: ['verify', 'verify https://forums.warframe.com/profile/881615-friendly0fire/'],
-            guildOnly: true,
+            guildOnly: false,
             args: [
                 {
                     key: 'url',
@@ -26,7 +26,7 @@ module.exports = class VerifyCommand extends Commando.Command {
         const token = WarframeProfileManager.instance.generateToken(msg.author.id);
         if(url == '') {
             return msg.direct(stripIndents`
-                **here is how to verify:**
+                **Here is how to verify:**
                 1. Navigate to the forums: <https://forums.warframe.com/>
                 2. At the top right of the page, click on your profile picture.
                 3. In the banner, click "Edit Profile".
@@ -37,15 +37,8 @@ module.exports = class VerifyCommand extends Commando.Command {
             `);
         } else {
             try {
-                const user = await WarframeProfileManager.instance.verifyToken(msg.author.id, url);
-
-                let nick = user.ign;
-                if(user.platform != "PC")
-                    nick += ` [${user.platform}]`;
-                await msg.member.setNickname(nick);
-                const verifiedRole = msg.guild.roles.cache.find(ro => ro.name === 'verified');
-                await msg.member.roles.add(verifiedRole);
-
+                await WarframeProfileManager.instance.verifyToken(msg.author.id, url);
+                await WarframeProfileManager.instance.applyVerification(msg.author.id, this.client);
                 return msg.direct("Congratulations, you have been verified! Your nickname has been set accordingly.");
             } catch(error) {
                 return msg.direct("Unfortunately, an error has occurred: " + error);

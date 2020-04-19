@@ -13,11 +13,11 @@ let config = {};
 {
     let rawConfig = fs.readFileSync('config.json');
     config = JSON.parse(rawConfig);
-}
 
-if(!config.token) {
-    console.error('No token found, cannot proceed.');
-    return;
+    if(!config.token) {
+        console.error('No token found, cannot proceed.');
+        return;
+    }
 }
 
 const client = new Commando.Client({
@@ -44,6 +44,6 @@ profileManager.setupClient(client);
 client.on('ready', () => {
     console.log('Bot initialized.');
 });
-//client.on('error', console.error);
+client.on('error', console.error);
 
 client.login(config.token);
