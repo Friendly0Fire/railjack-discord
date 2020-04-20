@@ -37,6 +37,10 @@ class WarframeGuildManager {
             if(!userData.verified)
                 await member.user.send("It appears you have not been validated yet. Please respond with `verify` to begin!");
         });
+
+        client.on('ready', async () => {
+            initGuilds(client.guilds.cache);
+        });
     }
 
     async initializeGuildData(guild) {
@@ -133,6 +137,10 @@ class WarframeGuildManager {
             const userData = WarframeProfileManager.instance.getUserData(member.user.id);
             this.applyVerificationSingle(userData, guild);
         });
+    }
+
+    async initGuilds(guilds) {
+        await guilds.each(this.refreshGuild);
     }
 }
 
