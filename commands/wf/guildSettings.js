@@ -1,5 +1,4 @@
 const Commando = require("discord.js-commando");
-const stripIndents = require('common-tags').stripIndents;
 const { WarframeGuildManager } = require('../../utils/guilds');
 
 module.exports = class GuildSettingsCommand extends Commando.Command {
@@ -32,7 +31,6 @@ module.exports = class GuildSettingsCommand extends Commando.Command {
         data[setting] = newValue;
 
         WarframeGuildManager.instance.setGuildData(msg.guild.id, data);
-        await WarframeGuildManager.instance.refreshGuild(msg.guild);
         return msg.reply(`Success! Setting ${setting} has been set to ${newValue}.`);
     }
 }

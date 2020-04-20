@@ -29,19 +29,7 @@ class WarframeProfileManager {
         return token;
     }
 
-    setupClient(client) {
-        client.on('guildMemberAdd', async member => {
-            const userData = this.getUserData(member.user.id);
-            await member.user.send(`Welcome to ${member.guild.name}, ${member}!`);
-
-            if(userData.verified)
-                this._applyVerificationSingle(userData, member.guild);
-            else
-                this._notifyUnverified(member);
-        });
-
-        client.on('guildCreate', this.initializeGuildData);
-    }
+    setupClient(client) { }
 
     async _loadProfilePage(profileUrl) {
         let ret = {};
@@ -96,40 +84,6 @@ class WarframeProfileManager {
             throw "User does not exist!";
 
         return priorEntry;
-    }
-
-    async _applyVerificationSingle(userData, guild) {
-        if(!userData.verified)
-            throw "User is not verified!";
-
-        const member = guild.members.fetch(userId);
-        const guildData = this.getGuildData(guid.id);
-
-        let nick = userData.ign;
-        if(userData.platform != guildData.defaultPlatform)
-            nick += ` [${userData.platform}]`;
-
-        await member.setNickname(nick);
-
-        const verifiedRole = guild.roles.cache.get(guildData.verifiedRole);
-        await member.roles.add(verifiedRole);
-
-        const platformRole = guild.roles.cache.get(guildData[userData.platform.toLowerCase() + "Role"]);
-        if(platformRole != undefined)
-            await member.roles.add(platformRole);
-    }
-
-    async applyVerification(userId, client) {
-        const userData = this.getUserData(userId);
-
-        client.guilds.cache.each(async guild => {
-            this._applyVerificationSingle(userData, guild);
-        });
-    }
-
-    async _notifyUnverified(member) {
-        await member.setNickname(member.user.username + "❔");
-        await member.user.send("You are currently unverified! To begin the verification process, please reply with `verify`");
     }
 }
 

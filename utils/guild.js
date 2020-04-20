@@ -1,5 +1,7 @@
 'use strict';
 
+const { WarframeProfileManager } = require('profile');
+
 class WarframeGuildManager {
     static instance = undefined;
     defaultVerifiedRole = "verified";
@@ -10,7 +12,14 @@ class WarframeGuildManager {
             throw "Instance already exists!";
 
         this.db = db;
-        this.db.prepare('CREATE TABLE IF NOT EXISTS guilds(guildId TEXT PRIMARY KEY, verifiedRole TEXT DEFAULT ?, defaultPlatform TEXT DEFAULT ?, pcRole TEXT DEFAULT "pc", ps4Role TEXT DEFAULT "ps4", xb1Role TEXT DEFAULT "xb1", nswRole TEX DEFAULT "nsw")')
+        this.db.prepare(`CREATE TABLE IF NOT EXISTS guilds(
+                            guildId TEXT PRIMARY KEY,
+                            verifiedRole TEXT DEFAULT ?,
+                            defaultPlatform TEXT DEFAULT ?,
+                            pcRole TEXT DEFAULT "pc",
+                            ps4Role TEXT DEFAULT "ps4",
+                            xb1Role TEXT DEFAULT "xb1",
+                            nswRole TEX DEFAULT "nsw")`)
                .run(defaultVerifiedRole, defaultPlatform);
 
         WarframeGuildManager.instance = this;
@@ -18,6 +27,16 @@ class WarframeGuildManager {
 
     setupClient(client) {
         client.on('guildCreate', this.initializeGuildData);
+
+        client.on('guildMemberAdd', async member => {
+            const userData = WarframeProfileManager.instance.getUserData(member.user.id);
+            await member.user.send(`Welcome to ${member.guild.name}, ${member}!`);
+
+            this.applyVerificationSingle(userData, member.guild);
+
+            if(!userData.verified)
+                await member.user.send("It appears you have not been validated yet. Please respond with `verify` to begin!");
+        });
     }
 
     async initializeGuildData(guild) {
@@ -26,11 +45,8 @@ class WarframeGuildManager {
         const members = await guild.members.fetch();
 
         members.each(async member => {
-            const userData = this.getUserData(member.user.id);
-            if(userData.verified)
-            await this._applyVerificationSingle(userData, guild);
-            else
-                await this._notifyUnverified(member);
+            const userData = WarframeProfileManager.instance.getUserData(member.user.id);
+            await this.applyVerificationSingle(userData, guild);
         });
     }
 
@@ -58,6 +74,65 @@ class WarframeGuildManager {
         params.push(guildId);
 
         this.db.prepare(query).run.apply(this, params);
+    }
+
+    async applyVerificationSingle(userData, guild) {
+        const member = guild.members.fetch(userId);
+        const guildData = this.getGuildData(guid.id);
+
+        let nick = "";
+        if(!userData.verified)
+            nick = member.user.username + "❔";
+        else {
+            nick = userData.ign;
+
+            if(userData.platform != guildData.defaultPlatform)
+                nick += ` [${userData.platform}]`;
+        }
+
+        if(member.nickname != nick)
+            await member.setNickname(nick);
+
+        const roles = guild.roles.fetch();
+
+        const verifiedRole = roles.get(guildData.verifiedRole);
+
+        if(userData.verified) {
+            let rolesToAdd = [ verifiedRole ];
+
+            const platformRole = roles.get(guildData[userData.platform.toLowerCase() + "Role"]);
+            if(platformRole != undefined)
+                rolesToAdd.push(platformRole);
+
+            await member.roles.add(rolesToAdd);
+        } else {
+            let rolesToRemove = [ verifiedRole ];
+
+            for(let roleKey in ["pc", "ps4", "xb1", "nsw"]) {
+                const platformRole = roles.get(guildData[roleKey + "Role"]);
+                if(platformRole != undefined)
+                rolesToRemove.push(platformRole);
+            }
+
+            await member.roles.remove(rolesToRemove);
+        }
+    }
+
+    async applyVerification(userId, client) {
+        const userData = WarframeProfileManager.instance.getUserData(userId);
+
+        client.guilds.fetch().each(async guild => {
+            this.applyVerificationSingle(userData, guild);
+        });
+    }
+
+    async refreshGuild(guild) {
+        const members = guild.members.fetch();
+
+        members.each(async member => {
+            const userData = WarframeProfileManager.instance.getUserData(member.user.id);
+            this.applyVerificationSingle(userData, guild);
+        });
     }
 }
 
