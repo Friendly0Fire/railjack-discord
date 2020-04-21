@@ -8,6 +8,22 @@ const Commando = require('discord.js-commando');
 const sqlite = require('sqlite');
 const bsqlite = require('better-sqlite3');
 const { WarframeProfileManager } = require('./utils/profile');
+const { WarframeGuildManager } = require('./utils/guild');
+const { WarframeTracker } = require('./utils/tracking');
+
+function indentedLog(txt) {
+    return txt.split("\n").map((line, i) => {
+        if(i > 0) {
+            line = "    " + line;
+        }
+        return line;
+    }).join("\n");
+}
+
+process.on('uncaughtException', function(error) {
+    console.error(error);
+    process.exit(1);
+   });
 
 // Load settings
 let config = {};
@@ -39,11 +55,13 @@ client.setProvider(
     ).catch(console.error);
 
 // Profile Manager initialization
-const db = bsqlite(path.join(__dirname, 'wf.db'));
+const db = bsqlite(path.join(__dirname, 'wf.db'), { verbose: x => console.log("SQL statement: " + indentedLog(x)) });
 const profileManager = new WarframeProfileManager(db);
 profileManager.setupClient(client);
 const guildManager = new WarframeGuildManager(db);
 guildManager.setupClient(client);
+const tracker = new WarframeTracker(db);
+tracker.setupClient(client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');

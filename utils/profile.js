@@ -13,7 +13,11 @@ class WarframeProfileManager {
             throw "Instance already exists!";
 
         this.db = db;
-        this.db.prepare('CREATE TABLE IF NOT EXISTS profiles(userId TEXT PRIMARY KEY, token TEXT, platform TEXT, ign TEXT, verified INTEGER)').run();
+        this.db.prepare(`CREATE TABLE IF NOT EXISTS profiles(
+                            userId TEXT PRIMARY KEY,
+                            token TEXT, platform TEXT,
+                            ign TEXT,
+                            verified INTEGER)`).run();
 
         WarframeProfileManager.instance = this;
     }
@@ -81,7 +85,12 @@ class WarframeProfileManager {
     getUserData(userId) {
         const priorEntry = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry == undefined)
-            throw "User does not exist!";
+            return {
+                userId: userId,
+                verified: false
+            };
+
+        priorEntry.verified = !!priorEntry.verified;
 
         return priorEntry;
     }

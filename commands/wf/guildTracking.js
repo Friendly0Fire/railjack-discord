@@ -21,7 +21,7 @@ module.exports = class GuildTrackingCommand extends Commando.Command {
                 },
                 {
                     key: 'channel',
-                    type: 'textChannel',
+                    type: 'text-channel',
                     prompt: 'What is the channel?'
                 },
                 {

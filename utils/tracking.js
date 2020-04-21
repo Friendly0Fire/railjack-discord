@@ -3,8 +3,8 @@
 // Load libraries
 const stripIndents = require('common-tags').stripIndents;
 const axios = require('axios').default;
-const { WarframeGuildManager } = require('guilds');
-const misc = require('misc');
+const { WarframeGuildManager } = require('./guild');
+const misc = require('./misc');
 
 class WarframeTracker {
     static instance = undefined;

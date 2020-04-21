@@ -1,11 +1,12 @@
 'use strict';
 
-const { WarframeProfileManager } = require('profile');
+const { WarframeProfileManager } = require('./profile');
+const misc = require('./misc');
 
 class WarframeGuildManager {
     static instance = undefined;
     defaultVerifiedRole = "verified";
-    defaultPlatform = "PC";
+    defaultPlatform = "pc";
 
     constructor(db) {
         if(WarframeGuildManager.instance != undefined)
@@ -14,13 +15,12 @@ class WarframeGuildManager {
         this.db = db;
         this.db.prepare(`CREATE TABLE IF NOT EXISTS guilds(
                             guildId TEXT PRIMARY KEY,
-                            verifiedRole TEXT DEFAULT ?,
-                            defaultPlatform TEXT DEFAULT ?,
-                            pcRole TEXT DEFAULT "pc",
-                            ps4Role TEXT DEFAULT "ps4",
-                            xb1Role TEXT DEFAULT "xb1",
-                            nswRole TEX DEFAULT "nsw")`)
-               .run(defaultVerifiedRole, defaultPlatform);
+                            verifiedRole TEXT DEFAULT "${this.defaultVerifiedRole}",
+                            defaultPlatform TEXT DEFAULT "${this.defaultPlatform}",
+                            pcRole TEXT DEFAULT "${misc.Platforms.pc}",
+                            ps4Role TEXT DEFAULT "${misc.Platforms.ps4}",
+                            xb1Role TEXT DEFAULT "${misc.Platforms.xb1}",
+                            nswRole TEX DEFAULT "${misc.Platforms.nsw}")`).run();
 
         WarframeGuildManager.instance = this;
     }
@@ -39,7 +39,7 @@ class WarframeGuildManager {
         });
 
         client.on('ready', async () => {
-            initGuilds(client.guilds.cache);
+            await this.initGuilds(client.guilds.cache);
         });
     }
 
@@ -57,7 +57,9 @@ class WarframeGuildManager {
     getGuildData(guildId) {
         const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guildId);
         if(guildData == undefined)
-            throw "Guild does not exist!";
+            return {
+                guildId: guildId
+            };
 
         return guildData;
     }
@@ -81,8 +83,12 @@ class WarframeGuildManager {
     }
 
     async applyVerificationSingle(userData, guild) {
-        const member = guild.members.fetch(userId);
-        const guildData = this.getGuildData(guid.id);
+        const member = await guild.members.fetch(userData.userId);
+
+        if(!member.manageable || member.user.bot)
+            return;
+
+        const guildData = this.getGuildData(guild.id);
 
         let nick = "";
         if(!userData.verified)
@@ -97,12 +103,14 @@ class WarframeGuildManager {
         if(member.nickname != nick)
             await member.setNickname(nick);
 
-        const roles = guild.roles.fetch();
+        const roles = (await guild.roles.fetch()).cache;
 
         const verifiedRole = roles.get(guildData.verifiedRole);
 
         if(userData.verified) {
-            let rolesToAdd = [ verifiedRole ];
+            let rolesToAdd = [];
+            if(verifiedRole != undefined)
+                rolesToAdd.push(verifiedRole);
 
             const platformRole = roles.get(guildData[userData.platform.toLowerCase() + "Role"]);
             if(platformRole != undefined)
@@ -110,37 +118,41 @@ class WarframeGuildManager {
 
             await member.roles.add(rolesToAdd);
         } else {
-            let rolesToRemove = [ verifiedRole ];
+            let rolesToRemove = [];
+            if(verifiedRole != undefined)
+            rolesToRemove.push(verifiedRole);
 
             for(let roleKey in ["pc", "ps4", "xb1", "nsw"]) {
                 const platformRole = roles.get(guildData[roleKey + "Role"]);
                 if(platformRole != undefined)
-                rolesToRemove.push(platformRole);
+                    rolesToRemove.push(platformRole);
             }
 
-            await member.roles.remove(rolesToRemove);
+            if(rolesToRemove.length > 0)
+                await member.roles.remove(rolesToRemove);
         }
     }
 
     async applyVerification(userId, client) {
         const userData = WarframeProfileManager.instance.getUserData(userId);
 
-        client.guilds.fetch().each(async guild => {
-            this.applyVerificationSingle(userData, guild);
+        const guilds = await client.guilds.fetch();
+        guilds.each(async guild => {
+            await this.applyVerificationSingle(userData, guild);
         });
     }
 
     async refreshGuild(guild) {
-        const members = guild.members.fetch();
+        const members = await guild.members.fetch();
 
         members.each(async member => {
             const userData = WarframeProfileManager.instance.getUserData(member.user.id);
-            this.applyVerificationSingle(userData, guild);
+            await this.applyVerificationSingle(userData, guild);
         });
     }
 
     async initGuilds(guilds) {
-        await guilds.each(this.refreshGuild);
+        await guilds.each(this.refreshGuild.bind(this));
     }
 }
 
