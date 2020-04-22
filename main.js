@@ -54,6 +54,8 @@ client.setProvider(
         sqlite.open(path.join(__dirname, 'settings.db')).then(db => new Commando.SQLiteProvider(db))
     ).catch(console.error);
 
+client.on('debug', x => console.log("Discord.js debug: " + indentedLog(x)));
+
 // Profile Manager initialization
 const db = bsqlite(path.join(__dirname, 'wf.db'), { verbose: x => console.log("SQL statement: " + indentedLog(x)) });
 const profileManager = new WarframeProfileManager(db);

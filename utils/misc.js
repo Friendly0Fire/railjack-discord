@@ -25,21 +25,21 @@ module.exports = {
 module.exports.timeDiff = (date1, date2) => {
     const msPerMinute = 1000 * 60;
     const msPerHour = msPerMinute * 60;
-    const msPerDay = msPerDay * 24;
+    const msPerDay = msPerHour * 24;
     const diff = date2 - date1;
     const days = Math.floor(diff / msPerDay);
     const hours = Math.floor((diff - days * msPerDay) / msPerHour);
     const minutes = Math.floor((diff - days * msPerDay - hours * msPerHour) / msPerMinute);
 
-    let diffText = "";
+    let timeElements = [];
     if(days > 0)
-        diffText += days + "d";
+        timeElements.push(days.toString().padStart(2, '0') + " days");
     if(hours > 0 || days > 0)
-        diffText += hours + "h";
+        timeElements.push(hours.toString().padStart(2, '0') + " hours");
     if(minutes > 0 || hours > 0 || days > 0)
-        diffText += minutes + "m";
+        timeElements.push(minutes.toString().padStart(2, '0') + " minutes");
     else
-        diffText = "<1m";
+        return "`<1 minute`";
 
-    return diffText;
+    return "`" + timeElements.join(", ") + "`";
 }

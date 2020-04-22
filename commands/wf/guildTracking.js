@@ -34,7 +34,7 @@ module.exports = class GuildTrackingCommand extends Commando.Command {
     }
 
     async run(msg, data) {
-        WarframeTracker.instance.setTrackingData(msg.guild.id, data);
+        WarframeTracker.instance.setTrackingData(msg.guild, data);
         return msg.reply(`Success! Channel #${data.channel.name} has been marked to track ${data.types} for ${misc.PlatformsPretty[data.platform]}.`);
     }
 }

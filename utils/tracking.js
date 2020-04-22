@@ -41,10 +41,15 @@ class WarframeTracker {
     }
 
     setupClient(client) {
-        this.interval = client.setInterval(this.tick, 30000);
+        this.interval = client.setInterval(() => this.tick(), 30000);
         this.client = client;
 
-        this._initGuilds().then(() => this.cleared = true);
+        client.on('ready', () => {
+            this._initGuilds().then(() => {
+                this.cleared = true;
+                this.tick();
+            });
+        });
 
         client.on('guildCreate', async guild => {
             cleared = this.cleared;
@@ -61,10 +66,10 @@ class WarframeTracker {
         str.split("|").forEach(type => {
             switch(type.trim()) {
             case "events":
-                mask += this.TypeEvent;
+                mask += WarframeTracker.TypeEvent;
                 break;
             case "anomalies":
-                mask += this.TypeAnomaly;
+                mask += WarframeTracker.TypeAnomaly;
                 break;
             }
         });
@@ -75,10 +80,12 @@ class WarframeTracker {
     setTrackingData(guild, data) {
         let entry = this.db.prepare("SELECT * FROM tracking WHERE guildId=? AND platform=?").get(guild.id, data.platform);
         if(entry != undefined) {
-            this.db.prepare("UPDATE tracking SET channel=?, mask=? WHERE guildId=? AND platform=?").run(data.channel.name, this._getMaskFromOrString(data.types), guild.id, data.platform);
+            this.db.prepare("UPDATE tracking SET channel=?, mask=? WHERE guildId=? AND platform=?").run(data.channel.id, this._getMaskFromOrString(data.types), guild.id, data.platform);
         } else {
-            this.db.prepare("INSERT INTO tracking(?, ?, ?, ?").run(guild.id, data.channel.name, this._getMaskFromOrString(data.types), data.platform);
+            this.db.prepare("INSERT INTO tracking VALUES (?, ?, ?, ?)").run(guild.id, data.channel.id, this._getMaskFromOrString(data.types), data.platform);
         }
+
+        this._initGuild(guild);
     }
 
     async _initGuilds() {
@@ -101,7 +108,7 @@ class WarframeTracker {
     async _createTrackingMessage(guild, upd) {
 
         let trackingChannel = this.trackingChannels[upd.platform][guild.id];
-        if(trackingChannel === undefined)
+        if(trackingChannel === undefined || trackingChannel == null)
             return;
 
         const msg = await trackingChannel.send(upd.content);
@@ -113,12 +120,14 @@ class WarframeTracker {
 
     async _updateGuilds(upd) {
         await this.client.guilds.cache.each(async guild => {
-            let trackingDatum = this.db.prepare("SELECT * FROM tracking WHERE guildId=? AND platform=?").all(guild.id, upd.platform);
-            if(trackingDatum.length == 0)
+            const trackingData = this.db.prepare("SELECT * FROM tracking WHERE guildId=? AND platform=?").all(guild.id, upd.platform);
+            if(trackingData.length == 0)
                 return;
 
+            const trackingDatum = trackingData[0];
+
             if((trackingDatum.mask & upd.type) !== 0) {
-                const trackingMessage = upd.postNew ? undefined : this.trackingMessages[upd.platform][guild.id][upd.name];
+                const trackingMessage = upd.postNew ? undefined : (this.trackingMessages[upd.platform][guild.id] || {})[upd.name];
                 if(trackingMessage === undefined)
                     await this._createTrackingMessage(guild, upd);
                 else
@@ -133,7 +142,7 @@ class WarframeTracker {
         if(eventsResponse.status !== 200)
             return;
 
-        const events = JSON.parse(eventsResponse.data);
+        const events = eventsResponse.data;
         await events.forEach(async element => {
             const event = this.parseEvent(element, platform);
             await this._updateGuilds(event);
@@ -146,7 +155,7 @@ class WarframeTracker {
         if(anomResponse.status !== 200)
             return;
 
-        const anom = this.parseAnomaly(JSON.parse(anomResponse.data), platform);
+        const anom = this.parseAnomaly(anomResponse.data, platform);
         await this._updateGuilds(anom);
     }
 
@@ -162,28 +171,33 @@ class WarframeTracker {
 
     parseEvent(eventIn, platform) {
         let evt = {
+            active: true,
             name: eventIn.description,
             ends: Date.parse(eventIn.expiry),
             currentStepStart: Date.parse(eventIn.altActivation),
             currentStepEnd: Date.parse(eventIn.altExpiry),
             nextStepStart: Date.parse(eventIn.nextAlt.activation),
             nextStepEnd: Date.parse(eventIn.nextAlt.expiry),
-            type: this.TypeEvent,
+            type: WarframeTracker.TypeEvent,
             platform: platform
         };
 
-        const prevEvt = eventHistory[platform][evt.name];
-        eventHistory[platform][evt.name] = evt;
+        const prevEvt = this.eventHistory[platform][evt.name];
+        this.eventHistory[platform][evt.name] = evt;
 
-        evt.postNew = prevEvt.ends != evt.ends;
-        if((!isNaN(evt.currentStepStart) || !isNaN(prevEvt.currentStepStart)) && evt.currentStepStart != prevEvt.currentStepStart)
+        if(prevEvt == undefined)
             evt.postNew = true;
-        if((!isNaN(evt.currentStepEnd) || !isNaN(prevEvt.currentStepEnd)) && evt.currentStepEnd != prevEvt.currentStepEnd)
-            evt.postNew = true;
-        if((!isNaN(evt.nextStepStart) || !isNaN(prevEvt.nextStepStart)) && evt.nextStepStart != prevEvt.nextStepStart)
-            evt.postNew = true;
-        if((!isNaN(evt.nextStepEnd) || !isNaN(prevEvt.nextStepEnd)) && evt.nextStepEnd != prevEvt.nextStepEnd)
-            evt.postNew = true;
+        else {
+            evt.postNew = prevEvt.ends != evt.ends;
+            if((!isNaN(evt.currentStepStart) || !isNaN(prevEvt.currentStepStart)) && evt.currentStepStart != prevEvt.currentStepStart)
+                evt.postNew = true;
+            if((!isNaN(evt.currentStepEnd) || !isNaN(prevEvt.currentStepEnd)) && evt.currentStepEnd != prevEvt.currentStepEnd)
+                evt.postNew = true;
+            if((!isNaN(evt.nextStepStart) || !isNaN(prevEvt.nextStepStart)) && evt.nextStepStart != prevEvt.nextStepStart)
+                evt.postNew = true;
+            if((!isNaN(evt.nextStepEnd) || !isNaN(prevEvt.nextStepEnd)) && evt.nextStepEnd != prevEvt.nextStepEnd)
+                evt.postNew = true;
+        }
 
         const now = Date.now();
 
@@ -191,38 +205,37 @@ class WarframeTracker {
                         **${evt.name}**
                         Time left: ${misc.timeDiff(now, evt.ends)}`;
         if(!isNaN(evt.currentStepEnd))
-            evt.content += `\nCurrent phase time left: ${misc.timeDiff(now, evt.currentStepEnd)}`;
+            evt.content += `\nCurrent phase ends in: ${misc.timeDiff(now, evt.currentStepEnd)}`;
         if(!isNaN(evt.nextStepStart))
-            evt.content += `\nNext phase time to start: ${misc.timeDiff(now, evt.nextStepStart)}`;
-        evt.content += `\nPlatform: ${platform}`;
+            evt.content += `\nNext phase starts in: ${misc.timeDiff(now, evt.nextStepStart)}`;
+        evt.content += `\nPlatform: ${misc.PlatformsPretty[platform]}`;
 
         return evt;
     }
 
     parseAnomaly(anomIn, platform) {
-        if(!anomIn.active) {
-            this.previousAnomaly[platform] = { active: false };
-            return this.previousAnomaly[platform];
-        }
-
         let anom = {
-            location: anomIn.mission.node,
-            ends: Date.parse(anomIn.expiry),
+            active: anomIn.active,
+            location: (anomIn.mission || {}).node,
+            ends: Date.parse(anomIn.previous.expiry),
+            nextStart: Date.parse(anomIn.activation),
+            type: WarframeTracker.TypeAnomaly,
             platform: platform
         }
 
         const prevAnom = this.previousAnomaly[platform];
         this.previousAnomaly[platform] = anom;
 
-        anom.postNew = !prevAnom.active || prevAnom.ends != anom.ends;
+        anom.postNew = prevAnom == undefined || (anom.active && !prevAnom.active);
 
         const now = Date.now();
 
-        anom.content = stripIndents`
-                        **Sentient Anomaly sighted**
-                        Location: ${anom.location}
-                        Time left: ${misc.timeDiff(now, anom.ends)}
-                        Platform: ${platform}`;
+        anom.content = "**Sentient Anomaly**";
+        if(!anom.active)
+            anom.content += `\nNext appearance in: ${misc.timeDiff(now, anom.nextStart)}`;
+        else
+            anom.content += `\nLocation: ${anom.location}\nTime left: ${misc.timeDiff(now, anom.ends)}`;
+        anom.content += `\nPlatform: ${misc.PlatformsPretty[platform]}`;
 
         return anom;
     }
