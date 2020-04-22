@@ -4,6 +4,7 @@
 const uuid = require('uuid');
 const axios = require('axios').default;
 const cheerio = require('cheerio');
+const misc = require('./misc');
 
 class WarframeProfileManager {
     static instance = undefined;
@@ -79,7 +80,14 @@ class WarframeProfileManager {
         if(pageResult.token.indexOf(priorEntry.token) == -1)
             throw "Token mismatch for user.";
 
-        this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(pageResult.platform, pageResult.username, userId);
+        const platformForumMapping = {
+            "PC": misc.Platforms.pc,
+            "XB1": misc.Platforms.xb1,
+            "PS4": misc.Platforms.ps4,
+            "NSW": misc.Platforms.nsw,
+        };
+
+        this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(platformForumMapping[pageResult.platform], pageResult.username, userId);
     }
 
     getUserData(userId) {

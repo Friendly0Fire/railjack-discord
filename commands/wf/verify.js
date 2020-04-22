@@ -1,6 +1,7 @@
 const Commando = require("discord.js-commando");
 const stripIndents = require('common-tags').stripIndents;
 const { WarframeProfileManager } = require('../../utils/profile');
+const { WarframeGuildManager } = require('../../utils/guild');
 
 module.exports = class VerifyCommand extends Commando.Command {
     constructor(client) {
@@ -33,12 +34,12 @@ module.exports = class VerifyCommand extends Commando.Command {
                 4. Paste the following text inside the text box: \`${token}\`.
                 5. Click "Save".
                 6. Copy the URL from your browser and run the \`verify\` command again like so:
-                \`${msg.guild.commandPrefix}verify https://forums.warframe.com/profile/<something>/\`
+                \`${msg.guild != undefined ? msg.guild.commandPrefix : ""}verify https://forums.warframe.com/profile/<something>/\`
             `);
         } else {
             try {
                 await WarframeProfileManager.instance.verifyToken(msg.author.id, url);
-                await WarframeProfileManager.instance.applyVerification(msg.author.id, this.client);
+                await WarframeGuildManager.instance.applyVerification(msg.author.id, this.client);
                 return msg.direct("Congratulations, you have been verified! Your nickname has been set accordingly.");
             } catch(error) {
                 return msg.direct("Unfortunately, an error has occurred: " + error);

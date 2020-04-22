@@ -6,7 +6,7 @@ const misc = require('./misc');
 class WarframeGuildManager {
     static instance = undefined;
     defaultVerifiedRole = "verified";
-    defaultPlatform = "pc";
+    defaultPlatform = "";
 
     constructor(db) {
         if(WarframeGuildManager.instance != undefined)
@@ -26,7 +26,7 @@ class WarframeGuildManager {
     }
 
     setupClient(client) {
-        client.on('guildCreate', this.initializeGuildData);
+        client.on('guildCreate', () => this.initializeGuildData());
 
         client.on('guildMemberAdd', async member => {
             const userData = WarframeProfileManager.instance.getUserData(member.user.id);
@@ -44,7 +44,9 @@ class WarframeGuildManager {
     }
 
     async initializeGuildData(guild) {
-        this.db.prepare("INSERT INTO guilds VALUES (?)").run(guild.id);
+        const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guild.id);
+        if(guildData == undefined)
+            this.db.prepare("INSERT INTO guilds (guildId) VALUES (?)").run(guild.id);
 
         const members = await guild.members.fetch();
 
@@ -79,7 +81,8 @@ class WarframeGuildManager {
         query += "WHERE guildId=?";
         params.push(guildId);
 
-        this.db.prepare(query).run.apply(this, params);
+        let statement = this.db.prepare(query);
+        statement.run.apply(statement, params);
     }
 
     async applyVerificationSingle(userData, guild) {
@@ -136,7 +139,7 @@ class WarframeGuildManager {
     async applyVerification(userId, client) {
         const userData = WarframeProfileManager.instance.getUserData(userId);
 
-        const guilds = await client.guilds.fetch();
+        const guilds = await client.guilds.cache;
         guilds.each(async guild => {
             await this.applyVerificationSingle(userData, guild);
         });
@@ -152,7 +155,9 @@ class WarframeGuildManager {
     }
 
     async initGuilds(guilds) {
-        await guilds.each(this.refreshGuild.bind(this));
+        await guilds.each(guild => {
+            this.initializeGuildData(guild);
+        });
     }
 }
 

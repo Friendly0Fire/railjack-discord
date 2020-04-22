@@ -26,11 +26,11 @@ module.exports = class GuildSettingsCommand extends Commando.Command {
         });
     }
 
-    async run(msg, { setting, newValue }) {
+    async run(msg, { setting, value }) {
         let data = {};
-        data[setting] = newValue;
+        data[setting] = value;
 
         WarframeGuildManager.instance.setGuildData(msg.guild.id, data);
-        return msg.reply(`Success! Setting ${setting} has been set to ${newValue}.`);
+        return msg.reply(`Success! Setting ${setting} has been set to ${value}.`);
     }
 }
