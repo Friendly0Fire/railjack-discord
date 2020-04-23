@@ -1,7 +1,7 @@
 const Commando = require("discord.js-commando");
 const stripIndents = require('common-tags').stripIndents;
-const { WarframeProfileManager } = require('../../utils/profile');
-const { WarframeGuildManager } = require('../../utils/guild');
+const { WarframeProfileManager } = require('../../modules/profile');
+const { WarframeGuildManager } = require('../../modules/guild');
 
 module.exports = class VerifyCommand extends Commando.Command {
     constructor(client) {

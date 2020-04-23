@@ -7,9 +7,10 @@ const Discord = require('discord.js');
 const Commando = require('discord.js-commando');
 const sqlite = require('sqlite');
 const bsqlite = require('better-sqlite3');
-const { WarframeProfileManager } = require('./utils/profile');
-const { WarframeGuildManager } = require('./utils/guild');
-const { WarframeTracker } = require('./utils/tracking');
+const { WarframeProfileManager } = require('./modules/profile');
+const { WarframeGuildManager } = require('./modules/guild');
+const { WarframeTracker } = require('./modules/tracking');
+const { MessageManager } = require('./modules/message');
 
 function indentedLog(txt) {
     return txt.split("\n").map((line, i) => {
@@ -45,7 +46,7 @@ const client = new Commando.Client({
 client.registry
     .registerGroups([
         ['wf', 'Warframe-related commands'],
-        ['admin', 'Administrative commands']
+        ['general', 'General commands']
     ])
     .registerDefaults()
     .registerCommandsIn(path.join(__dirname, 'commands'));
@@ -64,6 +65,8 @@ const guildManager = new WarframeGuildManager(db);
 guildManager.setupClient(client);
 const tracker = new WarframeTracker(db);
 tracker.setupClient(client);
+const messageManager = new MessageManager(db);
+messageManager.setupClient(client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');

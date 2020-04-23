@@ -71,14 +71,14 @@ class WarframeGuildManager {
         let params = [];
 
         for(let [k, v] of Object.entries(data)) {
-            query += `${k}=? `;
+            query += `${k}=?, `;
             params.push(v);
         }
 
         if(params.length === 0)
             return;
 
-        query += "WHERE guildId=?";
+        query = query.slice(0, -2) + " WHERE guildId=?";
         params.push(guildId);
 
         let statement = this.db.prepare(query);
