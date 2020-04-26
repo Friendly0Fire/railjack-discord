@@ -27,14 +27,18 @@ module.exports = class GuildTrackingCommand extends Commando.Command {
                 {
                     key: 'types',
                     type: 'string',
-                    prompt: 'What are the event types that should be tracked in this channel? Separate with |, no spaces.'
+                    prompt: 'What are the event types that should be tracked in this channel? Separate with |, no spaces.',
+                    default: ''
                 }
             ]
         });
     }
 
     async run(msg, data) {
-        WarframeTracker.instance.setTrackingData(msg.guild, data);
-        return msg.reply(`success! Channel #${data.channel.name} has been marked to track ${data.types} for ${misc.PlatformsPretty[data.platform]}.`);
+        await WarframeTracker.instance.setTrackingData(msg.guild, data);
+        if(data.types == '')
+            return msg.reply(`success! Channel #${data.channel.name} will no longer track anything for ${misc.PlatformsPretty[data.platform]}.`);
+        else
+            return msg.reply(`success! Channel #${data.channel.name} has been marked to track ${data.types} for ${misc.PlatformsPretty[data.platform]}.`);
     }
 }

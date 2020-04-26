@@ -69,8 +69,7 @@ class MessageManager {
         params.push(guildId);
         params.push(nickname);
 
-        let statement = this.db.prepare(query);
-        statement.run.apply(statement, params);
+        this.db.prepare(query).run(...params);
     }
 }
 

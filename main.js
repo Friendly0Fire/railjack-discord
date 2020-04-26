@@ -10,6 +10,7 @@ const bsqlite = require('better-sqlite3');
 const { WarframeProfileManager } = require('./modules/profile');
 const { WarframeGuildManager } = require('./modules/guild');
 const { WarframeTracker } = require('./modules/tracking');
+const { WarframeIntrinsicsManager } = require('./modules/intrinsics');
 const { MessageManager } = require('./modules/message');
 
 function indentedLog(txt) {
@@ -63,6 +64,8 @@ const profileManager = new WarframeProfileManager(db);
 profileManager.setupClient(client);
 const guildManager = new WarframeGuildManager(db);
 guildManager.setupClient(client);
+const intrinsicsManager = new WarframeIntrinsicsManager(db);
+intrinsicsManager.setupClient(client);
 const tracker = new WarframeTracker(db);
 tracker.setupClient(client);
 const messageManager = new MessageManager(db);

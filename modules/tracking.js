@@ -26,7 +26,7 @@ class WarframeTracker {
         this.db = db;
         this.db.prepare(`CREATE TABLE IF NOT EXISTS tracking(
                             guildId TEXT,
-                            channel TEXT,
+                            channelId TEXT,
                             mask INTEGER,
                             platform TEXT)`).run();
 
@@ -77,10 +77,20 @@ class WarframeTracker {
         return mask;
     }
 
-    setTrackingData(guild, data) {
+    async setTrackingData(guild, data) {
+        if(data.types == '') {
+            this.db.prepare("DELETE FROM tracking WHERE guildId=? AND platform=? AND channelId=?").run(guild.id, data.platform, data.channel.id);
+            delete this.trackingChannels[data.platform][guild.id];
+            for(let [k,v] of Object.entries(this.trackingMessages[data.platform][guild.id])) {
+                await v.delete();
+                delete this.trackingMessages[data.platform][guild.id][k];
+            }
+            return;
+        }
+
         let entry = this.db.prepare("SELECT * FROM tracking WHERE guildId=? AND platform=?").get(guild.id, data.platform);
         if(entry != undefined) {
-            this.db.prepare("UPDATE tracking SET channel=?, mask=? WHERE guildId=? AND platform=?").run(data.channel.id, this._getMaskFromOrString(data.types), guild.id, data.platform);
+            this.db.prepare("UPDATE tracking SET channelId=?, mask=? WHERE guildId=? AND platform=?").run(data.channel.id, this._getMaskFromOrString(data.types), guild.id, data.platform);
         } else {
             this.db.prepare("INSERT INTO tracking VALUES (?, ?, ?, ?)").run(guild.id, data.channel.id, this._getMaskFromOrString(data.types), data.platform);
         }
@@ -98,7 +108,7 @@ class WarframeTracker {
             return;
 
         await trackingData.forEach(async trackingDatum => {
-            let trackingChannel = await guild.channels.resolve(trackingDatum.channel);
+            let trackingChannel = await guild.channels.resolve(trackingDatum.channelId);
             if(trackingChannel !== undefined) {
                 this.trackingChannels[trackingDatum.platform][guild.id] = trackingChannel;
             }
@@ -106,12 +116,11 @@ class WarframeTracker {
     }
 
     async _createTrackingMessage(guild, upd) {
-
         let trackingChannel = this.trackingChannels[upd.platform][guild.id];
         if(trackingChannel === undefined || trackingChannel == null)
             return;
 
-        const msg = await trackingChannel.send(upd.content);
+        const msg = await trackingChannel.send(upd.finalContent);
 
         let guildMessages = this.trackingMessages[upd.platform][guild.id] || {};
         guildMessages[upd.name] = msg;
@@ -126,12 +135,19 @@ class WarframeTracker {
 
             const trackingDatum = trackingData[0];
 
+            const platformsInChannel = this.db.prepare("SELECT COUNT(channelId) FROM tracking WHERE guildId=? AND channelId=?").get(guild.id, trackingDatum.channelId)["COUNT(channelId)"];
+
             if((trackingDatum.mask & upd.type) !== 0) {
+                if(platformsInChannel > 1)
+                    upd.finalContent = upd.content + `\nPlatform: ${misc.PlatformsPretty[upd.platform]}`;
+                else
+                    upd.finalContent = upd.content;
+
                 const trackingMessage = upd.postNew ? undefined : (this.trackingMessages[upd.platform][guild.id] || {})[upd.name];
                 if(trackingMessage === undefined)
                     await this._createTrackingMessage(guild, upd);
                 else
-                    await trackingMessage.edit(upd.content);
+                    await trackingMessage.edit(upd.finalContent);
             }
         });
     }
@@ -179,6 +195,7 @@ class WarframeTracker {
             nextStepStart: Date.parse(eventIn.nextAlt.activation),
             nextStepEnd: Date.parse(eventIn.nextAlt.expiry),
             type: WarframeTracker.TypeEvent,
+            progress: eventIn.health,
             platform: platform
         };
 
@@ -208,7 +225,8 @@ class WarframeTracker {
             evt.content += `\nCurrent phase ends in: ${misc.timeDiff(now, evt.currentStepEnd)}`;
         if(!isNaN(evt.nextStepStart))
             evt.content += `\nNext phase starts in: ${misc.timeDiff(now, evt.nextStepStart)}`;
-        evt.content += `\nPlatform: ${misc.PlatformsPretty[platform]}`;
+        if(evt.progress != undefined)
+            evt.content += `\nProgress left: \`${evt.progress}%\``;
 
         return evt;
     }
@@ -235,7 +253,6 @@ class WarframeTracker {
             anom.content += `\nNext appearance in: ${misc.timeDiff(now, anom.nextStart)}`;
         else
             anom.content += `\nLocation: ${anom.location}\nTime left: ${misc.timeDiff(now, anom.ends)}`;
-        anom.content += `\nPlatform: ${misc.PlatformsPretty[platform]}`;
 
         return anom;
     }

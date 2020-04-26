@@ -1,5 +1,5 @@
 const Commando = require("discord.js-commando");
-const { WarframeGuildManager } = require('../../utils/guild');
+const { WarframeGuildManager } = require('../../modules/guild');
 
 module.exports = class GuildRefreshCommand extends Commando.Command {
     constructor(client) {
