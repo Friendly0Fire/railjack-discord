@@ -11,7 +11,6 @@ const { WarframeProfileManager } = require('./modules/profile');
 const { WarframeGuildManager } = require('./modules/guild');
 const { WarframeTracker } = require('./modules/tracking');
 const { WarframeIntrinsicsManager } = require('./modules/intrinsics');
-const { MessageManager } = require('./modules/message');
 
 function indentedLog(txt) {
     return txt.split("\n").map((line, i) => {
@@ -46,8 +45,7 @@ const client = new Commando.Client({
 // Commando configuration
 client.registry
     .registerGroups([
-        ['wf', 'Warframe-related commands'],
-        ['general', 'General commands']
+        ['wf', 'Warframe-related commands']
     ])
     .registerDefaults()
     .registerCommandsIn(path.join(__dirname, 'commands'));
@@ -68,8 +66,6 @@ const intrinsicsManager = new WarframeIntrinsicsManager(db);
 intrinsicsManager.setupClient(client);
 const tracker = new WarframeTracker(db);
 tracker.setupClient(client);
-const messageManager = new MessageManager(db);
-messageManager.setupClient(client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');
