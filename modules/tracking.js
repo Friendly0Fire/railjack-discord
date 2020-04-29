@@ -202,18 +202,22 @@ class WarframeTracker {
         const prevEvt = this.eventHistory[platform][evt.name];
         this.eventHistory[platform][evt.name] = evt;
 
+        const hasPhases = eventIn.metadata.duration != undefined;
+
         if(prevEvt == undefined)
             evt.postNew = true;
         else {
             evt.postNew = prevEvt.ends != evt.ends;
-            if((!isNaN(evt.currentStepStart) || !isNaN(prevEvt.currentStepStart)) && evt.currentStepStart != prevEvt.currentStepStart)
+            if(hasPhases) {
+                if((!isNaN(evt.currentStepStart) || !isNaN(prevEvt.currentStepStart)) && evt.currentStepStart != prevEvt.currentStepStart)
                 evt.postNew = true;
-            if((!isNaN(evt.currentStepEnd) || !isNaN(prevEvt.currentStepEnd)) && evt.currentStepEnd != prevEvt.currentStepEnd)
-                evt.postNew = true;
-            if((!isNaN(evt.nextStepStart) || !isNaN(prevEvt.nextStepStart)) && evt.nextStepStart != prevEvt.nextStepStart)
-                evt.postNew = true;
-            if((!isNaN(evt.nextStepEnd) || !isNaN(prevEvt.nextStepEnd)) && evt.nextStepEnd != prevEvt.nextStepEnd)
-                evt.postNew = true;
+                if((!isNaN(evt.currentStepEnd) || !isNaN(prevEvt.currentStepEnd)) && evt.currentStepEnd != prevEvt.currentStepEnd)
+                    evt.postNew = true;
+                if((!isNaN(evt.nextStepStart) || !isNaN(prevEvt.nextStepStart)) && evt.nextStepStart != prevEvt.nextStepStart)
+                    evt.postNew = true;
+                if((!isNaN(evt.nextStepEnd) || !isNaN(prevEvt.nextStepEnd)) && evt.nextStepEnd != prevEvt.nextStepEnd)
+                    evt.postNew = true;
+            }
         }
 
         const now = Date.now();
@@ -221,10 +225,12 @@ class WarframeTracker {
         evt.content = stripIndents`
                         **${evt.name}**
                         Time left: ${misc.timeDiff(now, evt.ends)}`;
-        if(!isNaN(evt.currentStepEnd))
-            evt.content += `\nCurrent phase ends in: ${misc.timeDiff(now, evt.currentStepEnd)}`;
-        if(!isNaN(evt.nextStepStart))
-            evt.content += `\nNext phase starts in: ${misc.timeDiff(now, evt.nextStepStart)}`;
+        if(hasPhases) {
+            if(!isNaN(evt.currentStepEnd) && evt.currentStepEnd != evt.nextStepStart)
+                evt.content += `\nCurrent phase ends in: ${misc.timeDiff(now, evt.currentStepEnd)}`;
+            if(!isNaN(evt.nextStepStart))
+                evt.content += `\nNext phase starts in: ${misc.timeDiff(now, evt.nextStepStart)}`;
+        }
         if(evt.progress != undefined)
             evt.content += `\nProgress left: \`${evt.progress}%\``;
 
