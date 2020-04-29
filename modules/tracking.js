@@ -19,6 +19,8 @@ class WarframeTracker {
     eventHistory = {};
     previousAnomaly = {};
 
+    thumbnailUrls = {};
+
     constructor(db) {
         if(WarframeTracker.instance != undefined)
             throw "Instance already exists!";
@@ -185,6 +187,23 @@ class WarframeTracker {
         });
     }
 
+    async getThumbnail(name) {
+        if(thumbnailUrls[name] != undefined && this.thumbnailUrls[name] != null)
+            return this.thumbnailUrls[name];
+
+        if(this.thumbnailUrls[name] == undefined) {
+            const url = "https://radiantlabs.ca/wf/thumbnails/" + name.replace(" ", "_") + ".png";
+            const thumbnailResponse = await axios.get(url);
+            if(thumbnailResponse.status != 200) {
+                this.thumbnailUrls[name] = null;
+                return null;
+            } else {
+                this.thumbnailUrls[name] = url;
+                return url;
+            }
+        }
+    }
+
     parseEvent(eventIn, platform) {
         let evt = {
             active: true,
@@ -198,6 +217,8 @@ class WarframeTracker {
             progress: eventIn.health,
             platform: platform
         };
+
+        evt.thumbnailUrl = this.getThumbnail(evt.name);
 
         const prevEvt = this.eventHistory[platform][evt.name];
         this.eventHistory[platform][evt.name] = evt;
@@ -246,6 +267,8 @@ class WarframeTracker {
             type: WarframeTracker.TypeAnomaly,
             platform: platform
         }
+
+        anom.thumbnailUrl = this.getThumbnail("SentientAnomaly");
 
         const prevAnom = this.previousAnomaly[platform];
         this.previousAnomaly[platform] = anom;

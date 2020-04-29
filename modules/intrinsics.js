@@ -165,10 +165,10 @@ class WarframeIntrinsicsManager {
             engineering: "Engineering Intrinsic"
         };
         const urls = {
-            tactical: "https://radiantlabs.ca/railjack/TacticalIntrinsic.png",
-            piloting: "https://radiantlabs.ca/railjack/PilotingIntrinsic.png",
-            gunnery: "https://radiantlabs.ca/railjack/GunneryIntrinsic.png",
-            engineering: "https://radiantlabs.ca/railjack/EngineeringIntrinsic.png"
+            tactical: "https://radiantlabs.ca/wf/railjack/TacticalIntrinsic.png",
+            piloting: "https://radiantlabs.ca/wf/railjack/PilotingIntrinsic.png",
+            gunnery: "https://radiantlabs.ca/wf/railjack/GunneryIntrinsic.png",
+            engineering: "https://radiantlabs.ca/wf/railjack/EngineeringIntrinsic.png"
         };
 
         const embed = new discord.MessageEmbed()
