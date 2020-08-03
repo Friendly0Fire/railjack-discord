@@ -6,11 +6,13 @@ const path = require('path');
 const Discord = require('discord.js');
 const Commando = require('discord.js-commando');
 const sqlite = require('sqlite');
+const sqlite3 = require('sqlite3');
 const bsqlite = require('better-sqlite3');
 const { WarframeProfileManager } = require('./modules/profile');
 const { WarframeGuildManager } = require('./modules/guild');
 const { WarframeTracker } = require('./modules/tracking');
 const { WarframeIntrinsicsManager } = require('./modules/intrinsics');
+const FallbackCommand = require('./fallbackCommand.js');
 
 function indentedLog(txt) {
     return txt.split("\n").map((line, i) => {
@@ -51,10 +53,13 @@ client.registry
     ])
     .registerDefaults()
     .registerCommandsIn(path.join(__dirname, 'commands'));
+client.registry.unknownCommand = new FallbackCommand(client);
 
-client.setProvider(
-        sqlite.open(path.join(config.dataPath, 'settings.db')).then(db => new Commando.SQLiteProvider(db))
-    ).catch(console.error);
+(async () => {
+    const db = await sqlite.open({ filename: path.join(config.dataPath, 'settings.db'),
+                                    driver: sqlite3.Database });
+    client.setProvider(new Commando.SQLiteProvider(db));
+})();
 
 client.on('debug', x => console.log("Discord.js debug: " + indentedLog(x)));
 
@@ -64,10 +69,10 @@ const profileManager = new WarframeProfileManager(db);
 profileManager.setupClient(client);
 const guildManager = new WarframeGuildManager(db);
 guildManager.setupClient(client);
-const intrinsicsManager = new WarframeIntrinsicsManager(db);
-intrinsicsManager.setupClient(client);
-const tracker = new WarframeTracker(db);
-tracker.setupClient(client);
+//const intrinsicsManager = new WarframeIntrinsicsManager(db);
+//intrinsicsManager.setupClient(client);
+//const tracker = new WarframeTracker(db);
+//tracker.setupClient(client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');

@@ -33,8 +33,8 @@ module.exports = class VerifyCommand extends Commando.Command {
                 3. In the banner, click "Edit Profile".
                 4. Paste the following text inside the text box: \`${token}\`.
                 5. Click "Save".
-                6. Copy the URL from your browser and run the \`verify\` command again like so:
-                \`${msg.guild != undefined ? msg.guild.commandPrefix : ""}verify https://forums.warframe.com/profile/<something>/\`
+                6. Copy the URL from your browser and paste it as an answer, it should look something like:
+                \`https://forums.warframe.com/profile/<something>/\`
             `);
         } else {
             try {
