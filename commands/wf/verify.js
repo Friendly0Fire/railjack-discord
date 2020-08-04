@@ -26,23 +26,29 @@ module.exports = class VerifyCommand extends Commando.Command {
     async run(msg, { url }) {
         const token = WarframeProfileManager.instance.generateToken(msg.author.id);
         if(url == '') {
-            return msg.direct(stripIndents`
-                **Here is how to verify:**
-                1. Navigate to the forums: <https://forums.warframe.com/>
-                2. At the top right of the page, click on your profile picture.
-                3. In the banner, click "Edit Profile".
-                4. Paste the following text inside the text box: \`${token}\`.
-                5. Click "Save".
-                6. Copy the URL from your browser and paste it as an answer, it should look something like:
+            const baseMessage = stripIndents`
+            **Here is how to verify:**
+            1. Navigate to the forums: <https://forums.warframe.com/>
+            2. At the top right of the page, click on your profile picture.
+            3. In the banner, click "Edit Profile".
+            4. Paste the following text inside the text box: \`${token}\`.
+            5. Click "Save".
+            6. Copy the URL from your browser and`;
+
+            return msg.direct(baseMessage + ` paste it as an answer to this DM, it should look something like:
                 \`https://forums.warframe.com/profile/<something>/\`
-            `);
+            `).catch(() => msg.reply(baseMessage + ` re-run this command with the URL appended, it should look something like:
+            \`${msg.guild != undefined ? msg.guild.commandPrefix : ""}verify https://forums.warframe.com/profile/<something>/\`
+        `));
         } else {
             try {
                 await WarframeProfileManager.instance.verifyToken(msg.author.id, url);
                 await WarframeGuildManager.instance.applyVerification(msg.author.id, this.client);
-                return msg.direct("Congratulations, you have been verified! Your nickname has been set accordingly. *You can now remove the code from your profile.*");
+                const baseMessage = "Congratulations, you have been verified! Your nickname has been set accordingly. *You can now remove the code from your profile.*";
+                return msg.direct(baseMessage).catch(() => msg.reply(baseMessage));
             } catch(error) {
-                return msg.direct("Unfortunately, an error has occurred: " + error);
+                const baseMessage = "Unfortunately, an error has occurred: " + error;
+                return msg.direct(baseMessage).catch(() => msg.reply(baseMessage));
             }
         }
     }
