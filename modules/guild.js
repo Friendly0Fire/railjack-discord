@@ -126,7 +126,7 @@ class WarframeGuildManager {
             nick = userData.ign;
 
             if(userData.platform != guildData.defaultPlatform)
-                nick = this.appendNickname(nick, ` [${userData.platform}]`);
+                nick = this.appendNickname(nick, ` [${misc.PlatformsPrettyShort[userData.platform]}]`);
         }
 
         if(member.nickname != nick)
@@ -145,7 +145,10 @@ class WarframeGuildManager {
             if(platformRole != undefined)
                 rolesToAdd.push(platformRole);
 
-            await member.roles.add(rolesToAdd);
+            console.log("Adding roles: " + rolesToAdd.map(x => x.name).join(", "));
+
+            if(rolesToAdd.length > 0)
+                await member.roles.add(rolesToAdd);
         } else {
             let rolesToRemove = [];
             if(verifiedRole != undefined)
@@ -156,6 +159,8 @@ class WarframeGuildManager {
                 if(platformRole != undefined)
                     rolesToRemove.push(platformRole);
             }
+
+            console.log("Removing roles: " + rolesToRemove.map(x => x.name).join(", "));
 
             if(rolesToRemove.length > 0)
                 await member.roles.remove(rolesToRemove);

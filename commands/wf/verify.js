@@ -40,7 +40,7 @@ module.exports = class VerifyCommand extends Commando.Command {
             try {
                 await WarframeProfileManager.instance.verifyToken(msg.author.id, url);
                 await WarframeGuildManager.instance.applyVerification(msg.author.id, this.client);
-                return msg.direct("Congratulations, you have been verified! Your nickname has been set accordingly.");
+                return msg.direct("Congratulations, you have been verified! Your nickname has been set accordingly. *You can now remove the code from your profile.*");
             } catch(error) {
                 return msg.direct("Unfortunately, an error has occurred: " + error);
             }
