@@ -102,6 +102,13 @@ class WarframeGuildManager {
         statement.run.apply(statement, params);
     }
 
+    appendNickname(nick, suffix) {
+        if(nick.length + suffix.length > 32)
+            return nick.substr(0, 32 - suffix.length - 1) + "…" + suffix;
+        else
+            return nick + suffix;
+    }
+
     async applyVerificationSingle(userData, guild) {
         const member = await guild.members.fetch(userData.userId);
 
@@ -110,16 +117,16 @@ class WarframeGuildManager {
 
         const guildData = this.getGuildData(guild.id);
         if(!guildData.enableVerification)
-        return;
+            return;
 
         let nick = "";
         if(!userData.verified)
-            nick = member.user.username + " ❔";
+            nick = this.appendNickname(member.user.username, " ❔");
         else {
             nick = userData.ign;
 
             if(userData.platform != guildData.defaultPlatform)
-                nick += ` [${userData.platform}]`;
+                nick = this.appendNickname(nick, ` [${userData.platform}]`);
         }
 
         if(member.nickname != nick)
