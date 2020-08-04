@@ -7,6 +7,7 @@ class WarframeGuildManager {
     static instance = undefined;
     defaultVerifiedRole = "verified";
     defaultPlatform = "";
+    enableVerification = false;
 
     constructor(db) {
         if(WarframeGuildManager.instance != undefined)
@@ -20,7 +21,8 @@ class WarframeGuildManager {
                             pcRole TEXT DEFAULT "${misc.Platforms.pc}",
                             ps4Role TEXT DEFAULT "${misc.Platforms.ps4}",
                             xb1Role TEXT DEFAULT "${misc.Platforms.xb1}",
-                            nswRole TEX DEFAULT "${misc.Platforms.nsw}")`).run();
+                            nswRole TEXT DEFAULT "${misc.Platforms.nsw}",
+                            enableVerification BOOLEAN DEFAULT ${this.enableVerification ? 1 : 0})`).run();
 
         WarframeGuildManager.instance = this;
     }
@@ -31,6 +33,10 @@ class WarframeGuildManager {
         client.on('guildMemberAdd', async member => {
             const userData = WarframeProfileManager.instance.getUserData(member.user.id);
             await member.user.send(`Welcome to ${member.guild.name}, ${member}!`);
+
+            const guildData = this.getGuildData(member.guild.id);
+            if(!guildData.enableVerification)
+                return;
 
             this.applyVerificationSingle(userData, member.guild);
 
@@ -48,12 +54,19 @@ class WarframeGuildManager {
         if(guildData == undefined)
             this.db.prepare("INSERT INTO guilds (guildId) VALUES (?)").run(guild.id);
 
+        if(guildData == undefined || !guildData.enableVerification)
+            return;
+
         const members = await guild.members.fetch();
 
         members.each(async member => {
             const userData = WarframeProfileManager.instance.getUserData(member.user.id);
             await this.applyVerificationSingle(userData, guild);
         });
+    }
+
+    getGuildLayout() {
+        return this.db.prepare("PRAGMA table_info(guilds)").all();
     }
 
     getGuildData(guildId) {
@@ -70,9 +83,13 @@ class WarframeGuildManager {
         let query = "UPDATE guilds SET ";
         let params = [];
 
+        const layout = this.getGuildLayout();
+
         for(let [k, v] of Object.entries(data)) {
-            query += `${k}=?, `;
-            params.push(v);
+            if(layout.some((l) => l.name === k)) {
+                query += `${k}=?, `;
+                params.push(v);
+            }
         }
 
         if(params.length === 0)
@@ -92,6 +109,8 @@ class WarframeGuildManager {
             return;
 
         const guildData = this.getGuildData(guild.id);
+        if(!guildData.enableVerification)
+        return;
 
         let nick = "";
         if(!userData.verified)
@@ -141,11 +160,17 @@ class WarframeGuildManager {
 
         const guilds = await client.guilds.cache;
         guilds.each(async guild => {
-            await this.applyVerificationSingle(userData, guild);
+            const guildData = this.getGuildData(guild.id);
+            if(guildData.enableVerification)
+                await this.applyVerificationSingle(userData, guild);
         });
     }
 
     async refreshGuild(guild) {
+        const guildData = this.getGuildData(guild.id);
+        if(!guildData.enableVerification)
+            return;
+
         const members = await guild.members.fetch();
 
         members.each(async member => {
