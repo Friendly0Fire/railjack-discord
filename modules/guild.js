@@ -114,7 +114,7 @@ class WarframeGuildManager {
 
         let nick = "";
         if(!userData.verified)
-            nick = member.user.username + "❔";
+            nick = member.user.username + " ❔";
         else {
             nick = userData.ign;
 
