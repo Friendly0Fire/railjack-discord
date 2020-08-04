@@ -20,13 +20,31 @@ module.exports = class GuildSettingsCommand extends Commando.Command {
                 {
                     key: 'value',
                     type: 'string',
-                    prompt: 'What is the new value?'
+                    prompt: 'What is the new value?',
+                    default: '*'
                 }
             ]
         });
     }
 
     async run(msg, { setting, value }) {
+        if(value == '*') {
+            const guildData = WarframeGuildManager.instance.getGuildData(msg.guild.id);
+            if(setting == '*') {
+                let response = "The following settings are defined:\n";
+                for(let [k, v] of Object.entries(guildData)) {
+                    response += `"${k}": "${v}"\n`;
+                }
+
+                return msg.reply(response);
+            }
+
+            if(setting in guildData)
+                return msg.reply(`Setting "${setting}" currently has value "${guildData[setting]}".`);
+
+            return msg.reply(`Setting "${setting}" not found!`);
+        }
+
         let data = {};
         data[setting] = value;
 
