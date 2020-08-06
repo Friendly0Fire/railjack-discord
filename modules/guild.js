@@ -134,7 +134,6 @@ class WarframeGuildManager {
         const roles = (await guild.roles.fetch()).cache;
 
         const unverifiedValid = guildData.unverifiedRole !== undefined && roles.has(guildData.unverifiedRole);
-        console.log("Unverified role is " + unverifiedValid ? "set." : "not set.");
 
         if(userData.verified) {
             await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, guildData[userData.platform.toLowerCase() + "Role"] ], roles));
