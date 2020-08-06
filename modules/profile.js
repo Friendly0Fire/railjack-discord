@@ -53,7 +53,7 @@ class WarframeProfileManager {
         ret.token = $("#elProfileTabs_content h2").next().text().trim();
         ret.username = $("#elProfileHeader .cProfileHeader_name h1").text().trim();
         if(ret.username.indexOf("(") != -1) {
-            const platformEnd = ret.username.indexOf(")") - 1;
+            const platformEnd = ret.username.indexOf(")");
             ret.platform = ret.username.slice(1, platformEnd);
             ret.username = ret.username.slice(platformEnd + 1);
         } else
