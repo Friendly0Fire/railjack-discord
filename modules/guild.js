@@ -5,8 +5,6 @@ const misc = require('./misc');
 
 class WarframeGuildManager {
     static instance = undefined;
-    defaultVerifiedRole = "verified";
-    defaultPlatform = "";
     enableVerification = false;
 
     constructor(db) {
@@ -16,7 +14,8 @@ class WarframeGuildManager {
         this.db = db;
         this.db.prepare(`CREATE TABLE IF NOT EXISTS guilds(
                             guildId TEXT PRIMARY KEY,
-                            verifiedRole TEXT DEFAULT "${this.defaultVerifiedRole}",
+                            verifiedRole TEXT DEFAULT "",
+                            unverifiedRole TEXT DEFAULT "",
                             defaultPlatform TEXT DEFAULT "${this.defaultPlatform}",
                             pcRole TEXT DEFAULT "${misc.Platforms.pc}",
                             ps4Role TEXT DEFAULT "${misc.Platforms.ps4}",
@@ -134,36 +133,18 @@ class WarframeGuildManager {
 
         const roles = (await guild.roles.fetch()).cache;
 
-        const verifiedRole = roles.get(guildData.verifiedRole);
-
         if(userData.verified) {
-            let rolesToAdd = [];
-            if(verifiedRole != undefined)
-                rolesToAdd.push(verifiedRole);
-
-            const platformRole = roles.get(guildData[userData.platform.toLowerCase() + "Role"]);
-            if(platformRole != undefined)
-                rolesToAdd.push(platformRole);
-
-            console.log("Adding roles: " + rolesToAdd.map(x => x.name).join(", "));
-
-            if(rolesToAdd.length > 0)
-                await member.roles.add(rolesToAdd);
+            await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, guildData[userData.platform.toLowerCase() + "Role"] ], roles));
+            if(guildData.unverifiedRole !== undefined)
+                await member.roles.remove(guildData.unverifiedRole);
         } else {
-            let rolesToRemove = [];
-            if(verifiedRole != undefined)
-            rolesToRemove.push(verifiedRole);
+            let rolesToRemove = [ guildData.verifiedRole ];
+            for(let roleKey in ["pc", "ps4", "xb1", "nsw"])
+                    rolesToRemove.push(guildData[roleKey + "Role"]);
 
-            for(let roleKey in ["pc", "ps4", "xb1", "nsw"]) {
-                const platformRole = roles.get(guildData[roleKey + "Role"]);
-                if(platformRole != undefined)
-                    rolesToRemove.push(platformRole);
-            }
-
-            console.log("Removing roles: " + rolesToRemove.map(x => x.name).join(", "));
-
-            if(rolesToRemove.length > 0)
-                await member.roles.remove(rolesToRemove);
+            await member.roles.remove(misc.filterSnowflakes(rolesToRemove, roles));
+            if(guildData.unverifiedRole !== undefined)
+                await member.roles.add(guildData.unverifiedRole);
         }
     }
 

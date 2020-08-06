@@ -43,3 +43,21 @@ module.exports.timeDiff = (date1, date2) => {
 
     return "`" + timeElements.join(", ") + "`";
 }
+
+module.exports.filterSnowflakes = function(snowflakes, coll) {
+    if(coll == null || coll.size === undefined || coll.size == 0)
+        return snowflakes.filter(s => s != null);
+
+    return snowflakes.filter(s => {
+        if(s == null)
+            return false;
+        if(typeof(s) === 'string')
+           return coll.has(s);
+        if(typeof(s) === 'object') {
+            if(Object.prototype.toString(s) == Object.prototype.toString(coll.values().next().value))
+                return true;
+        }
+
+        return false;
+    });
+};
