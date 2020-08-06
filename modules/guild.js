@@ -133,9 +133,11 @@ class WarframeGuildManager {
 
         const roles = (await guild.roles.fetch()).cache;
 
+        const unverifiedValid = guildData.unverifiedRole !== undefined && roles.get(guildData.unverifiedRole) !== undefined;
+
         if(userData.verified) {
             await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, guildData[userData.platform.toLowerCase() + "Role"] ], roles));
-            if(guildData.unverifiedRole !== undefined)
+            if(unverifiedValid)
                 await member.roles.remove(guildData.unverifiedRole);
         } else {
             let rolesToRemove = [ guildData.verifiedRole ];
@@ -143,7 +145,7 @@ class WarframeGuildManager {
                     rolesToRemove.push(guildData[roleKey + "Role"]);
 
             await member.roles.remove(misc.filterSnowflakes(rolesToRemove, roles));
-            if(guildData.unverifiedRole !== undefined)
+            if(unverifiedValid)
                 await member.roles.add(guildData.unverifiedRole);
         }
     }
