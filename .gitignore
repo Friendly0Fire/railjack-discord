@@ -105,3 +105,4 @@ dist
 
 config.json
 *.db
+test.ts

@@ -1,13 +1,15 @@
-'use strict';
-
-const { WarframeProfileManager } = require('./profile');
-const misc = require('./misc');
+import { WarframeProfileManager } from './profile';
+import * as misc from './misc';
+import * as bsqlite from 'better-sqlite3';
+import * as DiscordJS from 'discord.js';
 
 class WarframeGuildManager {
-    static instance = undefined;
+    static instance: WarframeGuildManager = undefined;
     enableVerification = false;
+    defaultPlatform = "";
+    db: bsqlite.Database = null;
 
-    constructor(db) {
+    constructor(db: bsqlite.Database) {
         if(WarframeGuildManager.instance != undefined)
             throw "Instance already exists!";
 
@@ -26,10 +28,10 @@ class WarframeGuildManager {
         WarframeGuildManager.instance = this;
     }
 
-    setupClient(client) {
-        client.on('guildCreate', () => this.initializeGuildData());
+    setupClient(client: DiscordJS.Client): void {
+        client.on('guildCreate', (guild: DiscordJS.Guild) => this.initializeGuildData(guild));
 
-        client.on('guildMemberAdd', async member => {
+        client.on('guildMemberAdd', async (member: DiscordJS.GuildMember) => {
             const userData = WarframeProfileManager.instance.getUserData(member.user.id);
             await member.user.send(`Welcome to ${member.guild.name}, ${member}!`);
 
@@ -48,7 +50,7 @@ class WarframeGuildManager {
         });
     }
 
-    async initializeGuildData(guild) {
+    async initializeGuildData(guild: DiscordJS.Guild): Promise<void> {
         const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guild.id);
         if(guildData == undefined)
             this.db.prepare("INSERT INTO guilds (guildId) VALUES (?)").run(guild.id);
@@ -68,7 +70,7 @@ class WarframeGuildManager {
         return this.db.prepare("PRAGMA table_info(guilds)").all();
     }
 
-    getGuildData(guildId) {
+    getGuildData(guildId: DiscordJS.Snowflake) {
         const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guildId);
         if(guildData == undefined)
             return {
@@ -78,7 +80,7 @@ class WarframeGuildManager {
         return guildData;
     }
 
-    setGuildData(guildId, data) {
+    setGuildData(guildId: DiscordJS.Snowflake, data: any): void {
         let query = "UPDATE guilds SET ";
         let params = [];
 
@@ -101,14 +103,14 @@ class WarframeGuildManager {
         statement.run.apply(statement, params);
     }
 
-    appendNickname(nick, suffix) {
+    appendNickname(nick: string, suffix: string): string {
         if(nick.length + suffix.length > 32)
             return nick.substr(0, 32 - suffix.length - 1) + "…" + suffix;
         else
             return nick + suffix;
     }
 
-    async applyVerificationSingle(userData, guild) {
+    async applyVerificationSingle(userData, guild: DiscordJS.Guild): Promise<void> {
         const member = await guild.members.fetch(userData.userId);
 
         if(!member.manageable || member.user.bot)
@@ -150,10 +152,10 @@ class WarframeGuildManager {
         }
     }
 
-    async applyVerification(userId, client) {
+    async applyVerification(userId: DiscordJS.Snowflake, client: DiscordJS.Client): Promise<void> {
         const userData = WarframeProfileManager.instance.getUserData(userId);
 
-        const guilds = await client.guilds.cache;
+        const guilds = client.guilds.cache;
         guilds.each(async guild => {
             const guildData = this.getGuildData(guild.id);
             if(guildData.enableVerification)
@@ -161,7 +163,7 @@ class WarframeGuildManager {
         });
     }
 
-    async refreshGuild(guild) {
+    async refreshGuild(guild: DiscordJS.Guild): Promise<void> {
         const guildData = this.getGuildData(guild.id);
         if(!guildData.enableVerification)
             return;
@@ -174,9 +176,9 @@ class WarframeGuildManager {
         });
     }
 
-    async initGuilds(guilds) {
-        await guilds.each(guild => {
-            this.initializeGuildData(guild);
+    async initGuilds(guilds: DiscordJS.Collection<DiscordJS.Snowflake, DiscordJS.Guild>): Promise<void> {
+        await guilds.each(async (guild: DiscordJS.Guild) => {
+            await this.initializeGuildData(guild);
         });
     }
 }

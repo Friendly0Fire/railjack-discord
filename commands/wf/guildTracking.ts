@@ -1,6 +1,13 @@
-const Commando = require("discord.js-commando");
-const { WarframeTracker } = require('../../modules/tracking');
-const misc = require('../../modules/misc');
+import * as Commando from 'discord.js-commando';
+import * as DiscordJS from 'discord.js';
+import { WarframeTracker } from '../../modules/tracking';
+import * as misc from '../../modules/misc';
+
+interface GuildTrackingData {
+    platform: string;
+    channel: DiscordJS.TextChannel;
+    types: string;
+}
 
 module.exports = class GuildTrackingCommand extends Commando.Command {
     constructor(client) {
@@ -34,7 +41,7 @@ module.exports = class GuildTrackingCommand extends Commando.Command {
         });
     }
 
-    async run(msg, data) {
+    async run(msg: Commando.CommandoMessage, data: GuildTrackingData): Promise<DiscordJS.Message | DiscordJS.Message[]> {
         await WarframeTracker.instance.setTrackingData(msg.guild, data);
         if(data.types == '')
             return msg.reply(`success! Channel #${data.channel.name} will no longer track anything for ${misc.PlatformsPretty[data.platform]}.`);

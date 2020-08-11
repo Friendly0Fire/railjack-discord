@@ -1,5 +1,6 @@
-const Commando = require("discord.js-commando");
-const { WarframeGuildManager } = require('../../modules/guild');
+import * as Commando from 'discord.js-commando';
+import * as DiscordJS from 'discord.js';
+import { WarframeGuildManager } from '../../modules/guild';
 
 module.exports = class GuildSettingsCommand extends Commando.Command {
     constructor(client) {
@@ -27,7 +28,7 @@ module.exports = class GuildSettingsCommand extends Commando.Command {
         });
     }
 
-    async run(msg, { setting, value }) {
+    async run(msg: Commando.CommandoMessage, { setting, value }: { setting: string, value: string }): Promise<DiscordJS.Message | DiscordJS.Message[]> {
         if(value == '*') {
             const guildData = WarframeGuildManager.instance.getGuildData(msg.guild.id);
             if(setting == '*') {
@@ -45,7 +46,7 @@ module.exports = class GuildSettingsCommand extends Commando.Command {
             return msg.reply(`Setting "${setting}" not found!`);
         }
 
-        let data = {};
+        let data: any = {};
         data[setting] = value;
 
         WarframeGuildManager.instance.setGuildData(msg.guild.id, data);

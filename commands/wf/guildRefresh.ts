@@ -1,5 +1,6 @@
-const Commando = require("discord.js-commando");
-const { WarframeGuildManager } = require('../../modules/guild');
+import * as Commando from 'discord.js-commando';
+import * as DiscordJS from 'discord.js';
+import { WarframeGuildManager } from '../../modules/guild';
 
 module.exports = class GuildRefreshCommand extends Commando.Command {
     constructor(client) {
@@ -14,7 +15,7 @@ module.exports = class GuildRefreshCommand extends Commando.Command {
         });
     }
 
-    async run(msg) {
+    async run(msg: Commando.CommandoMessage): Promise<DiscordJS.Message | DiscordJS.Message[]> {
         await WarframeGuildManager.instance.refreshGuild(msg.guild);
         return msg.reply(`Success! Refresh completed.`);
     }

@@ -1,7 +1,8 @@
-const Commando = require("discord.js-commando");
-const stripIndents = require('common-tags').stripIndents;
-const { WarframeProfileManager } = require('../../modules/profile');
-const { WarframeGuildManager } = require('../../modules/guild');
+import * as Commando from 'discord.js-commando';
+import * as DiscordJS from 'discord.js';
+import { stripIndents } from 'common-tags';
+import { WarframeProfileManager } from '../../modules/profile';
+import { WarframeGuildManager } from '../../modules/guild';
 
 module.exports = class VerifyCommand extends Commando.Command {
     constructor(client) {
@@ -23,7 +24,7 @@ module.exports = class VerifyCommand extends Commando.Command {
         });
     }
 
-    async run(msg, { url }) {
+    async run(msg: Commando.CommandoMessage, { url }: { url: string }): Promise<DiscordJS.Message | DiscordJS.Message[]> {
         const token = WarframeProfileManager.instance.generateToken(msg.author.id);
         if(url == '') {
             const baseMessage = stripIndents`

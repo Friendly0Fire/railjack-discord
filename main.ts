@@ -1,20 +1,16 @@
-'use strict';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as Commando from 'discord.js-commando';
+import * as sqlite from 'sqlite';
+import * as sqlite3 from 'sqlite3';
+import * as bsqlite from 'better-sqlite3';
+import { WarframeProfileManager } from './modules/profile';
+import { WarframeGuildManager } from './modules/guild';
+import { WarframeTracker } from './modules/tracking';
+import { WarframeIntrinsicsManager } from './modules/intrinsics';
+import { FallbackCommand } from './fallbackCommand';
 
-// Load libraries
-const fs = require('fs');
-const path = require('path');
-const Discord = require('discord.js');
-const Commando = require('discord.js-commando');
-const sqlite = require('sqlite');
-const sqlite3 = require('sqlite3');
-const bsqlite = require('better-sqlite3');
-const { WarframeProfileManager } = require('./modules/profile');
-const { WarframeGuildManager } = require('./modules/guild');
-const { WarframeTracker } = require('./modules/tracking');
-const { WarframeIntrinsicsManager } = require('./modules/intrinsics');
-const FallbackCommand = require('./fallbackCommand.js');
-
-function indentedLog(txt) {
+function indentedLog(txt: string): string {
     return txt.split("\n").map((line, i) => {
         if(i > 0) {
             line = "    " + line;
@@ -28,15 +24,22 @@ process.on('uncaughtException', function(error) {
     process.exit(1);
    });
 
+interface Configuration {
+    token: string;
+    owner: string;
+
+    dataPath: string;
+}
+
 // Load settings
-let config = {};
+let config: Configuration;
 {
-    let rawConfig = fs.readFileSync('config.json');
+    let rawConfig = fs.readFileSync('config.json').toString();
     config = JSON.parse(rawConfig);
 
     if(!config.token) {
         console.error('No token found, cannot proceed.');
-        return;
+        process.exit(1);
     }
 }
 
