@@ -1,28 +1,31 @@
-'use strict';
+import * as DiscordJS from 'discord.js';
 
-module.exports = {
-    Platforms: {
-        pc: "pc",
-        ps4: "ps4",
-        xb1: "xb1",
-        nsw: "nsw"
-    },
-    PlatformsPretty: {
-        pc: "PC",
-        ps4: "Playstation 4",
-        xb1: "Xbox One",
-        nsw: "Nintendo Switch"
-    },
-    PlatformsPrettyShort: {
-        pc: "PC",
-        ps4: "PS4",
-        xb1: "XB1",
-        nsw: "Switch"
-    },
-    PlatformsList: ["pc", "ps4", "xb1", "nsw"]
+export const Platforms = {
+    pc: "pc",
+    ps4: "ps4",
+    xb1: "xb1",
+    nsw: "nsw"
 };
 
-module.exports.timeDiff = (date1, date2) => {
+export const PlatformsPretty = {
+    pc: "PC",
+    ps4: "Playstation 4",
+    xb1: "Xbox One",
+    nsw: "Nintendo Switch"
+};
+
+export const PlatformsPrettyShort = {
+    pc: "PC",
+    ps4: "PS4",
+    xb1: "XB1",
+    nsw: "Switch"
+};
+
+export const PlatformsList = ["pc", "ps4", "xb1", "nsw"];
+
+export function timeDiff(date1: number | Date, date2: number | Date): string {
+    date1 = typeof date1 == "number" ? date1 : date1.getTime();
+    date2 = typeof date2 == "number" ? date1 : date2.getTime();
     const msPerMinute = 1000 * 60;
     const msPerHour = msPerMinute * 60;
     const msPerDay = msPerHour * 24;
@@ -31,7 +34,7 @@ module.exports.timeDiff = (date1, date2) => {
     const hours = Math.floor((diff - days * msPerDay) / msPerHour);
     const minutes = Math.floor((diff - days * msPerDay - hours * msPerHour) / msPerMinute);
 
-    let timeElements = [];
+    let timeElements: Array<string> = [];
     if(days > 0)
         timeElements.push(days.toString().padStart(2, '0') + " days");
     if(hours > 0 || days > 0)
@@ -44,17 +47,19 @@ module.exports.timeDiff = (date1, date2) => {
     return "`" + timeElements.join(", ") + "`";
 }
 
-module.exports.filterSnowflakes = function(snowflakes, coll) {
+export function filterSnowflakes(snowflakes: Array<DiscordJS.Snowflake | object>, coll: DiscordJS.Collection<string, any>): Array<DiscordJS.Snowflake | object> {
     if(coll == null || coll.size === undefined || coll.size == 0)
         return snowflakes.filter(s => s != null);
 
-    return snowflakes.filter(s => {
+    const collectionValueType = Object.prototype.toString.call(coll.values().next().value);
+
+    return snowflakes.filter(function(s) {
         if(s == null)
             return false;
         if(typeof(s) === 'string')
            return coll.has(s);
         if(typeof(s) === 'object') {
-            if(Object.prototype.toString(s) == Object.prototype.toString(coll.values().next().value))
+            if(Object.prototype.toString.call(s) == collectionValueType)
                 return true;
         }
 

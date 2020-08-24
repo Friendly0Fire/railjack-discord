@@ -1,21 +1,16 @@
-'use strict';
-
-// Load libraries
-const axios = require('axios').default;
-const cheerio = require('cheerio');
-const misc = require('./misc');
-
-const dayjs = require('dayjs');
-const dayjs_customParseFormat = require('dayjs/plugin/customParseFormat');
-const dayjs_utc = require('dayjs/plugin/utc');
-const dayjs_timezone = require('dayjs/plugin/timezone');
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import * as dayjs from 'dayjs';
+import * as dayjs_customParseFormat from 'dayjs/plugin/customParseFormat';
+import * as dayjs_utc from 'dayjs/plugin/utc';
+import * as dayjs_timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(dayjs_customParseFormat);
 dayjs.extend(dayjs_utc);
 dayjs.extend(dayjs_timezone);
 
-class WarframeStreams {
-    static instance = undefined;
+export class WarframeStreams {
+    static instance: WarframeStreams = undefined;
 
     constructor() {
         if(WarframeStreams.instance != undefined)
@@ -26,7 +21,7 @@ class WarframeStreams {
 
     setupClient(client) { }
 
-    async _loadNextStreamTime() {
+    async _loadNextStreamTime(): Promise<dayjs.Dayjs> {
 
         const response = await axios.get(`https://www.twitch.tv/warframe/schedule`, {
             headers: {
@@ -58,5 +53,3 @@ class WarframeStreams {
         return finalTime;
     }
 }
-
-module.exports = { WarframeStreams };

@@ -1,12 +1,66 @@
 'use strict';
 
 // Load libraries
-const stripIndents = require('common-tags').stripIndents;
-const axios = require('axios').default;
-const { WarframeGuildManager } = require('./guild');
-const misc = require('./misc');
+import { stripIndents } from 'common-tags';
+import axios from 'axios';
+import { WarframeGuildManager } from './guild';
+import * as misc from './misc';
+import * as bsqlite from 'better-sqlite3';
+import * as DiscordJS from 'discord.js';
 
-class WarframeTracker {
+export interface WarframeTracking {
+    guildId: string,
+    channelId: string,
+    mask: number,
+    platform: string
+};
+
+
+interface TrackingChannels {
+    [key: string]: {
+        [key: string]: DiscordJS.TextChannel
+    }
+};
+
+
+interface TrackingMessages {
+    [key: string]: {
+        [key: string]: {
+            [key: string]: DiscordJS.Message
+        }
+    }
+};
+
+interface WarframeAnomalyEvent {
+    active: boolean,
+    location: string,
+    ends: number,
+    nextStart: number,
+    type: number,
+    platform: string,
+    thumbnailUrl: string
+    postNew: boolean
+    content: string
+};
+
+interface WarframeEvent {
+    active: boolean,
+    name: string,
+    location: string,
+    ends: number,
+    currentStepStart: number,
+    currentStepEnd: number,
+    nextStepStart: number,
+    nextStepEnd: number,
+    type: number,
+    progress: number,
+    platform: string,
+    thumbnailUrl: string
+    postNew: boolean
+    content: string
+};
+
+export class WarframeTracker {
     static instance = undefined;
 
     static TypeEvent = 1;
@@ -14,14 +68,17 @@ class WarframeTracker {
 
     interval = null;
     cleared = false;
-    trackingChannels = {};
-    trackingMessages = {};
-    eventHistory = {};
-    previousAnomaly = {};
+    trackingChannels: TrackingChannels = {};
+    trackingMessages: TrackingMessages = {};
+    eventHistory: { [key: string]: { [key: string]: WarframeEvent } } = {};
+    previousAnomaly: { [key: string]: WarframeAnomalyEvent } = {};
 
-    thumbnailUrls = {};
+    thumbnailUrls: { [key: string]: string } = {};
 
-    constructor(db) {
+    db: bsqlite.Database = null;
+    client: DiscordJS.Client = null;
+
+    constructor(db: bsqlite.Database) {
         if(WarframeTracker.instance != undefined)
             throw "Instance already exists!";
 
@@ -36,33 +93,32 @@ class WarframeTracker {
             this.trackingChannels[platform] = {};
             this.trackingMessages[platform] = {};
             this.eventHistory[platform] = {};
-            this.previousAnomaly[platform] = { active: false };
+            this.previousAnomaly[platform] = { active: false } as WarframeAnomalyEvent;
         });
 
         WarframeTracker.instance = this;
     }
 
-    setupClient(client) {
+    setupClient(client: DiscordJS.Client) {
         this.interval = client.setInterval(() => this.tick(), 30000);
         this.client = client;
 
         client.on('ready', () => {
-            this._initGuilds().then(() => {
-                this.cleared = true;
-                this.tick();
-            });
+            this._initGuilds();
+            this.cleared = true;
+            this.tick();
         });
 
-        client.on('guildCreate', async guild => {
-            cleared = this.cleared;
+        client.on('guildCreate', guild => {
+            let cleared = this.cleared;
             this.cleared = false;
-            await this._initGuild(guild);
+            this._initGuild(guild);
             if(cleared)
                 this.cleared = true;
         });
     }
 
-    _getMaskFromOrString(str) {
+    _getMaskFromOrString(str: string): number {
         let mask = 0;
 
         str.split("|").forEach(type => {
@@ -79,7 +135,7 @@ class WarframeTracker {
         return mask;
     }
 
-    async setTrackingData(guild, data) {
+    async setTrackingData(guild: DiscordJS.Guild, data): Promise<void> {
         if(data.types == '') {
             this.db.prepare("DELETE FROM tracking WHERE guildId=? AND platform=? AND channelId=?").run(guild.id, data.platform, data.channel.id);
             delete this.trackingChannels[data.platform][guild.id];
@@ -90,7 +146,7 @@ class WarframeTracker {
             return;
         }
 
-        let entry = this.db.prepare("SELECT * FROM tracking WHERE guildId=? AND platform=?").get(guild.id, data.platform);
+        let entry: WarframeTracking = this.db.prepare("SELECT * FROM tracking WHERE guildId=? AND platform=?").get(guild.id, data.platform);
         if(entry != undefined) {
             this.db.prepare("UPDATE tracking SET channelId=?, mask=? WHERE guildId=? AND platform=?").run(data.channel.id, this._getMaskFromOrString(data.types), guild.id, data.platform);
         } else {
@@ -100,24 +156,24 @@ class WarframeTracker {
         this._initGuild(guild);
     }
 
-    async _initGuilds() {
-        await this.client.guilds.cache.each(async guild => await this._initGuild(guild));
+    _initGuilds() {
+        this.client.guilds.cache.each(guild => this._initGuild(guild));
     }
 
-    async _initGuild(guild) {
-        let trackingData = this.db.prepare("SELECT * FROM tracking WHERE guildId=?").all(guild.id);
+    _initGuild(guild: DiscordJS.Guild) {
+        let trackingData: Array<WarframeTracking> = this.db.prepare("SELECT * FROM tracking WHERE guildId=?").all(guild.id);
         if(trackingData.length == 0)
             return;
 
-        await trackingData.forEach(async trackingDatum => {
-            let trackingChannel = await guild.channels.resolve(trackingDatum.channelId);
+        trackingData.forEach(trackingDatum => {
+            let trackingChannel = <DiscordJS.TextChannel>guild.channels.resolve(trackingDatum.channelId);
             if(trackingChannel !== undefined) {
                 this.trackingChannels[trackingDatum.platform][guild.id] = trackingChannel;
             }
         });
     }
 
-    async _createTrackingMessage(guild, upd) {
+    async _createTrackingMessage(guild: DiscordJS.Guild, upd) {
         let trackingChannel = this.trackingChannels[upd.platform][guild.id];
         if(trackingChannel === undefined || trackingChannel == null)
             return;
@@ -162,7 +218,7 @@ class WarframeTracker {
 
         const events = eventsResponse.data;
         await events.forEach(async element => {
-            const event = this.parseEvent(element, platform);
+            const event = await this.parseEvent(element, platform);
             await this._updateGuilds(event);
         });
     }
@@ -173,7 +229,7 @@ class WarframeTracker {
         if(anomResponse.status !== 200)
             return;
 
-        const anom = this.parseAnomaly(anomResponse.data, platform);
+        const anom = await this.parseAnomaly(anomResponse.data, platform);
         await this._updateGuilds(anom);
     }
 
@@ -187,8 +243,8 @@ class WarframeTracker {
         });
     }
 
-    async getThumbnail(name) {
-        if(thumbnailUrls[name] != undefined && this.thumbnailUrls[name] != null)
+    async getThumbnail(name: string) {
+        if(this.thumbnailUrls[name] != undefined && this.thumbnailUrls[name] != null)
             return this.thumbnailUrls[name];
 
         if(this.thumbnailUrls[name] == undefined) {
@@ -204,10 +260,11 @@ class WarframeTracker {
         }
     }
 
-    parseEvent(eventIn, platform) {
-        let evt = {
+    async parseEvent(eventIn: any, platform: string) {
+        let evt: WarframeEvent = {
             active: true,
             name: eventIn.description,
+            location: (eventIn.mission || {}).node,
             ends: Date.parse(eventIn.expiry),
             currentStepStart: Date.parse(eventIn.altActivation),
             currentStepEnd: Date.parse(eventIn.altExpiry),
@@ -215,10 +272,14 @@ class WarframeTracker {
             nextStepEnd: Date.parse(eventIn.nextAlt.expiry),
             type: WarframeTracker.TypeEvent,
             progress: eventIn.health,
-            platform: platform
+            platform: platform,
+
+            thumbnailUrl: null,
+            postNew: false,
+            content: ""
         };
 
-        evt.thumbnailUrl = this.getThumbnail(evt.name);
+        evt.thumbnailUrl = await this.getThumbnail(evt.name);
 
         const prevEvt = this.eventHistory[platform][evt.name];
         this.eventHistory[platform][evt.name] = evt;
@@ -231,7 +292,7 @@ class WarframeTracker {
             evt.postNew = prevEvt.ends != evt.ends;
             if(hasPhases) {
                 if((!isNaN(evt.currentStepStart) || !isNaN(prevEvt.currentStepStart)) && evt.currentStepStart != prevEvt.currentStepStart)
-                evt.postNew = true;
+                    evt.postNew = true;
                 if((!isNaN(evt.currentStepEnd) || !isNaN(prevEvt.currentStepEnd)) && evt.currentStepEnd != prevEvt.currentStepEnd)
                     evt.postNew = true;
                 if((!isNaN(evt.nextStepStart) || !isNaN(prevEvt.nextStepStart)) && evt.nextStepStart != prevEvt.nextStepStart)
@@ -246,6 +307,8 @@ class WarframeTracker {
         evt.content = stripIndents`
                         **${evt.name}**
                         Time left: ${misc.timeDiff(now, evt.ends)}`;
+        if(evt.location != undefined)
+            evt.content += `\nLocation: ${evt.location}`;
         if(hasPhases) {
             if(!isNaN(evt.currentStepEnd) && evt.currentStepEnd != evt.nextStepStart)
                 evt.content += `\nCurrent phase ends in: ${misc.timeDiff(now, evt.currentStepEnd)}`;
@@ -258,17 +321,21 @@ class WarframeTracker {
         return evt;
     }
 
-    parseAnomaly(anomIn, platform) {
-        let anom = {
+    async parseAnomaly(anomIn: any, platform: string) {
+        let anom: WarframeAnomalyEvent = {
             active: anomIn.active,
             location: (anomIn.mission || {}).node,
             ends: Date.parse(anomIn.previous.expiry),
             nextStart: Date.parse(anomIn.activation),
             type: WarframeTracker.TypeAnomaly,
-            platform: platform
+            platform: platform,
+
+            thumbnailUrl: null,
+            postNew: false,
+            content: ""
         }
 
-        anom.thumbnailUrl = this.getThumbnail("SentientAnomaly");
+        anom.thumbnailUrl = await this.getThumbnail("SentientAnomaly");
 
         const prevAnom = this.previousAnomaly[platform];
         this.previousAnomaly[platform] = anom;
@@ -286,5 +353,3 @@ class WarframeTracker {
         return anom;
     }
 }
-
-module.exports = { WarframeTracker };

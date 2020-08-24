@@ -3,7 +3,7 @@ import * as misc from './misc';
 import * as bsqlite from 'better-sqlite3';
 import * as DiscordJS from 'discord.js';
 
-class WarframeGuildManager {
+export class WarframeGuildManager {
     static instance: WarframeGuildManager = undefined;
     enableVerification = false;
     defaultPlatform = "";
@@ -182,5 +182,3 @@ class WarframeGuildManager {
         });
     }
 }
-
-module.exports = { WarframeGuildManager };

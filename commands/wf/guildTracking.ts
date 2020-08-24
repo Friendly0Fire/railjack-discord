@@ -3,14 +3,14 @@ import * as DiscordJS from 'discord.js';
 import { WarframeTracker } from '../../modules/tracking';
 import * as misc from '../../modules/misc';
 
-interface GuildTrackingData {
+export interface GuildTrackingData {
     platform: string;
     channel: DiscordJS.TextChannel;
     types: string;
 }
 
-module.exports = class GuildTrackingCommand extends Commando.Command {
-    constructor(client) {
+export class GuildTrackingCommand extends Commando.Command {
+    constructor(client: Commando.CommandoClient) {
         super(client, {
             name: 'track',
             group: 'wf',

@@ -2,8 +2,8 @@ import * as Commando from 'discord.js-commando';
 import * as DiscordJS from 'discord.js';
 import { WarframeGuildManager } from '../../modules/guild';
 
-module.exports = class GuildSettingsCommand extends Commando.Command {
-    constructor(client) {
+export class GuildSettingsCommand extends Commando.Command {
+    constructor(client: Commando.CommandoClient) {
         super(client, {
             name: 'settings',
             group: 'wf',

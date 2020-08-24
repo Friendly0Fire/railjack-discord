@@ -1,13 +1,20 @@
-'use strict';
+import * as uuid from 'uuid';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import * as misc from './misc';
+import * as bsqlite from 'better-sqlite3';
+import * as DiscordJS from 'discord.js';
 
-// Load libraries
-const uuid = require('uuid');
-const axios = require('axios').default;
-const cheerio = require('cheerio');
-const misc = require('./misc');
+export interface WarframeProfile {
+    userId: string,
+    token: string,
+    ign: string,
+    verified: boolean
+};
 
-class WarframeProfileManager {
-    static instance = undefined;
+export class WarframeProfileManager {
+    static instance: WarframeProfileManager = undefined;
+    db: bsqlite.Database = null;
 
     constructor(db) {
         if(WarframeProfileManager.instance != undefined)
@@ -23,8 +30,8 @@ class WarframeProfileManager {
         WarframeProfileManager.instance = this;
     }
 
-    generateToken(userId) {
-        const priorEntry = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
+    generateToken(userId: string): string {
+        const priorEntry: WarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry != undefined)
             return priorEntry.token;
 
@@ -34,10 +41,14 @@ class WarframeProfileManager {
         return token;
     }
 
-    setupClient(client) { }
+    setupClient(client: DiscordJS.Client) { }
 
-    async _loadProfilePage(profileUrl) {
-        let ret = {};
+    async _loadProfilePage(profileUrl: string) {
+        let ret = {
+            username: null,
+            token: null,
+            platform: null
+        };
 
         const response = await axios.get(`https://forums.warframe.com/profile/${profileUrl}/?tab=field_core_pfield_1&timestamp=${new Date().getTime()}`, {
             headers: {
@@ -62,7 +73,7 @@ class WarframeProfileManager {
         return ret;
     }
 
-    _stripUrl(profileUrl) {
+    _stripUrl(profileUrl: string): string {
         const profileIndex = profileUrl.indexOf("profile/");
         if(profileIndex != -1)
             profileUrl = profileUrl.slice(profileIndex + 8);
@@ -70,8 +81,8 @@ class WarframeProfileManager {
         return profileUrl.replace("/", "");
     }
 
-    async verifyToken(userId, profileUrl) {
-        const priorEntry = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
+    async verifyToken(userId: string, profileUrl: string) {
+        const priorEntry: WarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry == undefined)
             throw "No token found for user.";
 
@@ -90,12 +101,14 @@ class WarframeProfileManager {
         this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(platformForumMapping[pageResult.platform], pageResult.username, userId);
     }
 
-    getUserData(userId) {
-        const priorEntry = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(userId);
+    getUserData(userId: string): WarframeProfile {
+        const priorEntry: WarframeProfile = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry == undefined)
             return {
                 userId: userId,
-                verified: false
+                verified: false,
+                token: null,
+                ign: null
             };
 
         priorEntry.verified = !!priorEntry.verified;
@@ -103,5 +116,3 @@ class WarframeProfileManager {
         return priorEntry;
     }
 }
-
-module.exports = { WarframeProfileManager };
