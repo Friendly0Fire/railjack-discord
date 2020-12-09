@@ -1,11 +1,12 @@
 FROM node:current-alpine
 
-RUN apk add --no-cache python make g++
-
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install
+
+RUN apk add --no-cache --virtual .gyp python make g++ \
+    && npm install \
+    && apk del .gyp
 
 COPY . .
 
