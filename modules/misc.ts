@@ -2,26 +2,26 @@ import * as DiscordJS from 'discord.js';
 
 export const Platforms = {
     pc: "pc",
-    ps4: "ps4",
-    xb1: "xb1",
+    ps: "ps",
+    xb: "xb",
     nsw: "nsw"
 };
 
 export const PlatformsPretty = {
     pc: "PC",
-    ps4: "Playstation 4",
-    xb1: "Xbox One",
+    ps: "Playstation",
+    xb: "Xbox",
     nsw: "Nintendo Switch"
 };
 
 export const PlatformsPrettyShort = {
     pc: "PC",
-    ps4: "PS4",
-    xb1: "XB1",
+    ps: "PS",
+    xb: "XB",
     nsw: "Switch"
 };
 
-export const PlatformsList = ["pc", "ps4", "xb1", "nsw"];
+export const PlatformsList = ["pc", "ps", "xb", "nsw"];
 
 export function timeDiff(date1: number | Date, date2: number | Date): string {
     date1 = typeof date1 == "number" ? date1 : date1.getTime();

@@ -93,9 +93,9 @@ export class WarframeProfileManager {
 
         const platformForumMapping = {
             "PC": misc.Platforms.pc,
-            "XB1": misc.Platforms.xb1,
-            "PS4": misc.Platforms.ps4,
-            "NSW": misc.Platforms.nsw,
+            "XBOX": misc.Platforms.xb,
+            "PSN": misc.Platforms.ps,
+            "NSW": misc.Platforms.nsw
         };
 
         this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(platformForumMapping[pageResult.platform], pageResult.username, userId);

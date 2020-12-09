@@ -20,8 +20,8 @@ export class WarframeGuildManager {
                             unverifiedRole TEXT DEFAULT "",
                             defaultPlatform TEXT DEFAULT "${this.defaultPlatform}",
                             pcRole TEXT DEFAULT "${misc.Platforms.pc}",
-                            ps4Role TEXT DEFAULT "${misc.Platforms.ps4}",
-                            xb1Role TEXT DEFAULT "${misc.Platforms.xb1}",
+                            psRole TEXT DEFAULT "${misc.Platforms.ps}",
+                            xbRole TEXT DEFAULT "${misc.Platforms.xb}",
                             nswRole TEXT DEFAULT "${misc.Platforms.nsw}",
                             enableVerification BOOLEAN DEFAULT ${this.enableVerification ? 1 : 0})`).run();
 
