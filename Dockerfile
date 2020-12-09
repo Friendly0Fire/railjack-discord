@@ -10,4 +10,4 @@ RUN apk add --no-cache --virtual .gyp python make g++ \
 
 COPY . .
 
-CMD [ "node", "main.js" ]
+CMD [ "node", "main.ts" ]
