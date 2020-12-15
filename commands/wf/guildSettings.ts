@@ -1,6 +1,7 @@
 import * as Commando from 'discord.js-commando';
 import * as DiscordJS from 'discord.js';
-import { WarframeGuildManager } from '../../modules/guild';
+import { ISetWarframeGuild, WarframeGuildManager } from '../../modules/guild';
+import { is } from 'typescript-is';
 
 export class GuildSettingsCommand extends Commando.Command {
     constructor(client: Commando.CommandoClient) {
@@ -49,7 +50,10 @@ export class GuildSettingsCommand extends Commando.Command {
         let data: any = {};
         data[setting] = value;
 
-        WarframeGuildManager.instance.setGuildData(msg.guild.id, data);
-        return msg.reply(`Success! Setting ${setting} has been set to ${value}.`);
+        if(is<ISetWarframeGuild>(data)) {
+            WarframeGuildManager.instance.setGuildData(msg.guild.id, data);
+            return msg.reply(`Success! Setting ${setting} has been set to ${value}.`);
+        } else
+            return msg.reply(`Error! Setting ${setting} does not exist.`);
     }
 }

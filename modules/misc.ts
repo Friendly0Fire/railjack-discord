@@ -47,7 +47,7 @@ export function timeDiff(date1: number | Date, date2: number | Date): string {
     return "`" + timeElements.join(", ") + "`";
 }
 
-export function filterSnowflakes(snowflakes: Array<DiscordJS.Snowflake | object>, coll: DiscordJS.Collection<string, any>): Array<DiscordJS.Snowflake | object> {
+export function filterSnowflakes<T = DiscordJS.Snowflake>(snowflakes: Array<T>, coll: DiscordJS.Collection<string, any>): Array<T> {
     if(coll == null || coll.size === undefined || coll.size == 0)
         return snowflakes.filter(s => s != null);
 

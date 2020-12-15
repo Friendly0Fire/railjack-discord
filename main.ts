@@ -6,8 +6,6 @@ import * as sqlite3 from 'sqlite3';
 import * as bsqlite from 'better-sqlite3';
 import { WarframeProfileManager } from './modules/profile';
 import { WarframeGuildManager } from './modules/guild';
-import { WarframeTracker } from './modules/tracking';
-import { WarframeIntrinsicsManager } from './modules/intrinsics';
 import { FallbackCommand } from './fallbackCommand';
 
 function indentedLog(txt: string): string {

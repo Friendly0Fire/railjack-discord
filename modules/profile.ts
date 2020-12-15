@@ -5,18 +5,26 @@ import * as misc from './misc';
 import * as bsqlite from 'better-sqlite3';
 import * as DiscordJS from 'discord.js';
 
-export interface WarframeProfile {
-    userId: string,
-    token: string,
-    ign: string,
-    verified: boolean
+export interface IWarframeProfile {
+    userId: DiscordJS.Snowflake;
+    token: string;
+    ign: string;
+    verified: boolean;
+};
+
+export type ISetWarframeProfile = Partial<Omit<IWarframeProfile, "userId">>;
+
+interface IWarframeWebsiteProfile {
+    username: string;
+    token: string;
+    platform: string;
 };
 
 export class WarframeProfileManager {
     static instance: WarframeProfileManager = undefined;
     db: bsqlite.Database = null;
 
-    constructor(db) {
+    constructor(db: bsqlite.Database) {
         if(WarframeProfileManager.instance != undefined)
             throw "Instance already exists!";
 
@@ -31,7 +39,7 @@ export class WarframeProfileManager {
     }
 
     generateToken(userId: string): string {
-        const priorEntry: WarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
+        const priorEntry: IWarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry != undefined)
             return priorEntry.token;
 
@@ -43,8 +51,8 @@ export class WarframeProfileManager {
 
     setupClient(client: DiscordJS.Client) { }
 
-    async _loadProfilePage(profileUrl: string) {
-        let ret = {
+    async _loadProfilePage(profileUrl: string): Promise<IWarframeWebsiteProfile> {
+        let ret: IWarframeWebsiteProfile = {
             username: null,
             token: null,
             platform: null
@@ -81,8 +89,8 @@ export class WarframeProfileManager {
         return profileUrl.replace("/", "");
     }
 
-    async verifyToken(userId: string, profileUrl: string) {
-        const priorEntry: WarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
+    async verifyToken(userId: string, profileUrl: string): Promise<void> {
+        const priorEntry: IWarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry == undefined)
             throw "No token found for user.";
 
@@ -101,15 +109,10 @@ export class WarframeProfileManager {
         this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(platformForumMapping[pageResult.platform], pageResult.username, userId);
     }
 
-    getUserData(userId: string): WarframeProfile {
-        const priorEntry: WarframeProfile = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(userId);
+    getUserData(userId: string): IWarframeProfile {
+        const priorEntry: IWarframeProfile = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(userId);
         if(priorEntry == undefined)
-            return {
-                userId: userId,
-                verified: false,
-                token: null,
-                ign: null
-            };
+            throw "User does not exist.";
 
         priorEntry.verified = !!priorEntry.verified;
 

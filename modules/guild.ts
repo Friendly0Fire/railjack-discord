@@ -3,6 +3,20 @@ import * as misc from './misc';
 import * as bsqlite from 'better-sqlite3';
 import * as DiscordJS from 'discord.js';
 
+export interface IWarframeGuild {
+    guildId: DiscordJS.Snowflake;
+    verifiedRole: DiscordJS.Snowflake;
+    unverifiedRole: DiscordJS.Snowflake;
+    defaultPlatform: string;
+    pcRole: DiscordJS.Snowflake;
+    psRole: DiscordJS.Snowflake;
+    xbRole: DiscordJS.Snowflake;
+    nswRole: DiscordJS.Snowflake;
+    enableVerification: boolean;
+}
+
+export type ISetWarframeGuild = Partial<Omit<IWarframeGuild, "guildId">>;
+
 export class WarframeGuildManager {
     static instance: WarframeGuildManager = undefined;
     enableVerification = false;
@@ -70,17 +84,15 @@ export class WarframeGuildManager {
         return this.db.prepare("PRAGMA table_info(guilds)").all();
     }
 
-    getGuildData(guildId: DiscordJS.Snowflake) {
-        const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guildId);
+    getGuildData(guildId: DiscordJS.Snowflake): IWarframeGuild {
+        const guildData: IWarframeGuild = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guildId);
         if(guildData == undefined)
-            return {
-                guildId: guildId
-            };
+            throw "Guild does not exist.";
 
         return guildData;
     }
 
-    setGuildData(guildId: DiscordJS.Snowflake, data: any): void {
+    setGuildData(guildId: DiscordJS.Snowflake, data: ISetWarframeGuild): void {
         let query = "UPDATE guilds SET ";
         let params = [];
 
@@ -138,7 +150,7 @@ export class WarframeGuildManager {
         const unverifiedValid = guildData.unverifiedRole !== undefined && roles.has(guildData.unverifiedRole);
 
         if(userData.verified) {
-            await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, guildData[userData.platform.toLowerCase() + "Role"] ], roles));
+            await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, guildData[userData.platform.toLowerCase() + "Role"] as DiscordJS.Snowflake ], roles));
             if(unverifiedValid)
                 await member.roles.remove(guildData.unverifiedRole);
         } else {

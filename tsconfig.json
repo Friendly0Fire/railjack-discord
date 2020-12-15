@@ -2,6 +2,11 @@
     "compilerOptions": {
         "target": "es5",
         "module": "CommonJS",
-        "sourceMap": true
+        "sourceMap": true,
+        "outDir": "build",
+        "strict": true,
+        "plugins": [
+            { "transform": "typescript-is/lib/transform-inline/transformer" }
+        ]
     }
 }
