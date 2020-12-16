@@ -7,6 +7,7 @@ import * as DiscordJS from 'discord.js';
 
 export interface IWarframeProfile {
     userId: DiscordJS.Snowflake;
+    platform: string;
     token: string;
     ign: string;
     verified: boolean;
@@ -21,11 +22,11 @@ interface IWarframeWebsiteProfile {
 };
 
 export class WarframeProfileManager {
-    static instance: WarframeProfileManager = undefined;
-    db: bsqlite.Database = null;
+    static instance: WarframeProfileManager;
+    db: bsqlite.Database;
 
-    constructor(db: bsqlite.Database) {
-        if(WarframeProfileManager.instance != undefined)
+    constructor(db: bsqlite.Database, client: DiscordJS.Client) {
+        if(!!WarframeProfileManager.instance)
             throw "Instance already exists!";
 
         this.db = db;
@@ -49,14 +50,8 @@ export class WarframeProfileManager {
         return token;
     }
 
-    setupClient(client: DiscordJS.Client) { }
-
     async _loadProfilePage(profileUrl: string): Promise<IWarframeWebsiteProfile> {
-        let ret: IWarframeWebsiteProfile = {
-            username: null,
-            token: null,
-            platform: null
-        };
+        let ret: IWarframeWebsiteProfile = {} as IWarframeWebsiteProfile;
 
         const response = await axios.get(`https://forums.warframe.com/profile/${profileUrl}/?tab=field_core_pfield_1&timestamp=${new Date().getTime()}`, {
             headers: {
@@ -99,7 +94,7 @@ export class WarframeProfileManager {
         if(pageResult.token.indexOf(priorEntry.token) == -1)
             throw "Token mismatch for user.";
 
-        const platformForumMapping = {
+        const platformForumMapping: misc.IPlatform = {
             "PC": misc.Platforms.pc,
             "XBOX": misc.Platforms.xb,
             "PSN": misc.Platforms.ps,

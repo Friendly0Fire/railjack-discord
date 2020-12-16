@@ -5,7 +5,7 @@ import { WarframeProfileManager } from '../../modules/profile';
 import { WarframeGuildManager } from '../../modules/guild';
 
 export class VerifyCommand extends Commando.Command {
-    constructor(client) {
+    constructor(client: Commando.CommandoClient) {
         super(client, {
             name: 'verify',
             group: 'wf',

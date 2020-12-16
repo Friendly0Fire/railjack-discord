@@ -1,20 +1,24 @@
 import * as DiscordJS from 'discord.js';
 
-export const Platforms = {
+export interface IPlatform {
+    [platform: string]: string;
+}
+
+export const Platforms: IPlatform = {
     pc: "pc",
     ps: "ps",
     xb: "xb",
     nsw: "nsw"
 };
 
-export const PlatformsPretty = {
+export const PlatformsPretty: IPlatform = {
     pc: "PC",
     ps: "Playstation",
     xb: "Xbox",
     nsw: "Nintendo Switch"
 };
 
-export const PlatformsPrettyShort = {
+export const PlatformsPrettyShort: IPlatform = {
     pc: "PC",
     ps: "PS",
     xb: "XB",

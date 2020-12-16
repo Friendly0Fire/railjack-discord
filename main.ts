@@ -66,10 +66,8 @@ client.on('debug', x => console.log("Discord.js debug: " + indentedLog(x)));
 
 // Profile Manager initialization
 const db = bsqlite(path.join(config.dataPath, 'wf.db'), { verbose: x => console.log("SQL statement: " + indentedLog(x)) });
-const profileManager = new WarframeProfileManager(db);
-profileManager.setupClient(client);
-const guildManager = new WarframeGuildManager(db);
-guildManager.setupClient(client);
+const profileManager = new WarframeProfileManager(db, client);
+const guildManager = new WarframeGuildManager(db, client);
 //const intrinsicsManager = new WarframeIntrinsicsManager(db);
 //intrinsicsManager.setupClient(client);
 //const tracker = new WarframeTracker(db);

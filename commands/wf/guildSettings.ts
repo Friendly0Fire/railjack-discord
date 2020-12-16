@@ -42,7 +42,7 @@ export class GuildSettingsCommand extends Commando.Command {
             }
 
             if(setting in guildData)
-                return msg.reply(`Setting "${setting}" currently has value "${guildData[setting]}".`);
+                return msg.reply(`Setting "${setting}" currently has value "${(<any>guildData)[setting]}".`);
 
             return msg.reply(`Setting "${setting}" not found!`);
         }

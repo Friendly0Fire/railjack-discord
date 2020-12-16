@@ -1,4 +1,4 @@
-import { WarframeProfileManager } from './profile';
+import { IWarframeProfile, WarframeProfileManager } from './profile';
 import * as misc from './misc';
 import * as bsqlite from 'better-sqlite3';
 import * as DiscordJS from 'discord.js';
@@ -18,13 +18,13 @@ export interface IWarframeGuild {
 export type ISetWarframeGuild = Partial<Omit<IWarframeGuild, "guildId">>;
 
 export class WarframeGuildManager {
-    static instance: WarframeGuildManager = undefined;
+    static instance: WarframeGuildManager;
     enableVerification = false;
     defaultPlatform = "";
-    db: bsqlite.Database = null;
+    db: bsqlite.Database;
 
-    constructor(db: bsqlite.Database) {
-        if(WarframeGuildManager.instance != undefined)
+    constructor(db: bsqlite.Database, client: DiscordJS.Client) {
+        if(!!WarframeGuildManager.instance)
             throw "Instance already exists!";
 
         this.db = db;
@@ -40,9 +40,11 @@ export class WarframeGuildManager {
                             enableVerification BOOLEAN DEFAULT ${this.enableVerification ? 1 : 0})`).run();
 
         WarframeGuildManager.instance = this;
+
+        this._setupClient(client);
     }
 
-    setupClient(client: DiscordJS.Client): void {
+    private _setupClient(client: DiscordJS.Client): void {
         client.on('guildCreate', (guild: DiscordJS.Guild) => this.initializeGuildData(guild));
 
         client.on('guildMemberAdd', async (member: DiscordJS.GuildMember) => {
@@ -122,7 +124,7 @@ export class WarframeGuildManager {
             return nick + suffix;
     }
 
-    async applyVerificationSingle(userData, guild: DiscordJS.Guild): Promise<void> {
+    async applyVerificationSingle(userData: IWarframeProfile, guild: DiscordJS.Guild): Promise<void> {
         const member = await guild.members.fetch(userData.userId);
 
         if(!member.manageable || member.user.bot)
@@ -150,13 +152,13 @@ export class WarframeGuildManager {
         const unverifiedValid = guildData.unverifiedRole !== undefined && roles.has(guildData.unverifiedRole);
 
         if(userData.verified) {
-            await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, guildData[userData.platform.toLowerCase() + "Role"] as DiscordJS.Snowflake ], roles));
+            await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, (<any>guildData)[userData.platform.toLowerCase() + "Role"] as DiscordJS.Snowflake ], roles));
             if(unverifiedValid)
                 await member.roles.remove(guildData.unverifiedRole);
         } else {
             let rolesToRemove = [ guildData.verifiedRole ];
-            for(let roleKey in ["pc", "ps4", "xb1", "nsw"])
-                    rolesToRemove.push(guildData[roleKey + "Role"]);
+            for(let roleKey in misc.PlatformsList)
+                    rolesToRemove.push((<any>guildData)[roleKey + "Role"]);
 
             await member.roles.remove(misc.filterSnowflakes(rolesToRemove, roles));
             if(unverifiedValid)
