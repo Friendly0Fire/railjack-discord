@@ -3,7 +3,7 @@ import * as DiscordJS from 'discord.js';
 import { WarframeProfileManager } from './modules/profile';
 import { WarframeGuildManager } from './modules/guild';
 
-export class FallbackCommand extends Commando.Command {
+export default class FallbackCommand extends Commando.Command {
 
     #profileUrl = /https:\/\/forums\.warframe\.com\/profile\/[0-9]+\-.+\//;
 

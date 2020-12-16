@@ -2,7 +2,7 @@ import * as Commando from 'discord.js-commando';
 import * as DiscordJS from 'discord.js';
 import { WarframeGuildManager } from '../../modules/guild';
 
-export class GuildRefreshCommand extends Commando.Command {
+export default class GuildRefreshCommand extends Commando.Command {
     constructor(client: Commando.CommandoClient) {
         super(client, {
             name: 'refresh',

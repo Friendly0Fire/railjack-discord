@@ -8,7 +8,7 @@
 				"$tsc"
 			],
 			"group": "build",
-			"label": "npm: build",
+			"label": "ttsc: build",
 			"detail": "ttsc -p ."
 		}
 	]

@@ -6,7 +6,7 @@ import * as sqlite3 from 'sqlite3';
 import * as bsqlite from 'better-sqlite3';
 import { WarframeProfileManager } from './modules/profile';
 import { WarframeGuildManager } from './modules/guild';
-import { FallbackCommand } from './fallbackCommand';
+import FallbackCommand from './fallbackCommand';
 
 function indentedLog(txt: string): string {
     return txt.split("\n").map((line, i) => {
@@ -41,7 +41,7 @@ let config: Configuration;
     }
 }
 
-config.dataPath = path.join(__dirname, "data/");
+config.dataPath = path.join(process.cwd(), "data/");
 
 const client = new Commando.Client({
     'owner': config.owner || ''

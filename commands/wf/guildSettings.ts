@@ -3,7 +3,7 @@ import * as DiscordJS from 'discord.js';
 import { ISetWarframeGuild, WarframeGuildManager } from '../../modules/guild';
 import { is } from 'typescript-is';
 
-export class GuildSettingsCommand extends Commando.Command {
+export default class GuildSettingsCommand extends Commando.Command {
     constructor(client: Commando.CommandoClient) {
         super(client, {
             name: 'settings',

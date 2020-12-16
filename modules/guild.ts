@@ -77,8 +77,14 @@ export class WarframeGuildManager {
         const members = await guild.members.fetch();
 
         members.each(async member => {
-            const userData = WarframeProfileManager.instance.getUserData(member.user.id);
-            await this.applyVerificationSingle(userData, guild);
+            if(member.user.bot)
+                return;
+            try {
+                const userData = WarframeProfileManager.instance.getUserData(member.user.id);
+                await this.applyVerificationSingle(userData, guild);
+            } catch(ex) {
+                console.log("Skipping init over non-existent member " + member.nickname + "...");
+            }
         });
     }
 

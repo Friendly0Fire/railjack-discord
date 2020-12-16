@@ -4,7 +4,7 @@ import { stripIndents } from 'common-tags';
 import { WarframeProfileManager } from '../../modules/profile';
 import { WarframeGuildManager } from '../../modules/guild';
 
-export class VerifyCommand extends Commando.Command {
+export default class VerifyCommand extends Commando.Command {
     constructor(client: Commando.CommandoClient) {
         super(client, {
             name: 'verify',
