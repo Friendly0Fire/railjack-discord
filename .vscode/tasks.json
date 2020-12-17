@@ -3,13 +3,12 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "build",
+			"script": "clean-build",
 			"problemMatcher": [
 				"$tsc"
 			],
 			"group": "build",
-			"label": "ttsc: build",
-			"detail": "ttsc -p ."
+			"label": "ttsc: build"
 		}
 	]
 }

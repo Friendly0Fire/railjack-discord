@@ -6,7 +6,7 @@ import * as sqlite3 from 'sqlite3';
 import * as bsqlite from 'better-sqlite3';
 import { WarframeProfileManager } from './modules/profile';
 import { WarframeGuildManager } from './modules/guild';
-import { FallbackCommand } from './commands/fallbackCommand';
+import { FallbackCommand } from './fallbackCommand';
 
 function indentedLog(txt: string): string {
     return txt.split("\n").map((line, i) => {
@@ -35,7 +35,7 @@ config.dataPath = path.join(process.cwd(), "data/");
 
 {
     let rawConfig = fs.readFileSync(path.join(config.dataPath, 'config.json')).toString();
-    config = JSON.parse(rawConfig);
+    Object.assign(config, JSON.parse(rawConfig));
 
     if(!config.token) {
         console.error('No token found, cannot proceed.');

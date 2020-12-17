@@ -5,15 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "node",
+            "type": "pwa-node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Launch",
+            "runtimeArgs": [
+                "--nolazy",
+                "-r",
+                "ts-node/register/transpile-only"
+            ],
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\main.ts",
-            "preLaunchTask": "ttsc: build",
-            "outFiles": ["${workspaceFolder}/build/**/*.js"]
+            "program": "${workspaceFolder}/src/main.ts",
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+              ]
         }
     ]
 }

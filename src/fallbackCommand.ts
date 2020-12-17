@@ -1,7 +1,7 @@
 import * as Commando from 'discord.js-commando';
 import * as DiscordJS from 'discord.js';
-import { WarframeProfileManager } from '../modules/profile';
-import { WarframeGuildManager } from '../modules/guild';
+import { WarframeProfileManager } from './modules/profile';
+import { WarframeGuildManager } from './modules/guild';
 
 export class FallbackCommand extends Commando.Command {
 
