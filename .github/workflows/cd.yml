@@ -28,6 +28,7 @@ jobs:
         uses: Friendly0Fire/action-tsc@master
         with:
           executable: ttsc
+          project: tsconfig.json
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
