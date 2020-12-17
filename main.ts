@@ -30,9 +30,11 @@ interface Configuration {
 }
 
 // Load settings
-let config: Configuration;
+let config: Configuration = {} as Configuration;
+config.dataPath = path.join(process.cwd(), "data/");
+
 {
-    let rawConfig = fs.readFileSync('config.json').toString();
+    let rawConfig = fs.readFileSync(path.join(config.dataPath, 'config.json')).toString();
     config = JSON.parse(rawConfig);
 
     if(!config.token) {
@@ -40,8 +42,6 @@ let config: Configuration;
         process.exit(1);
     }
 }
-
-config.dataPath = path.join(process.cwd(), "data/");
 
 const client = new Commando.Client({
     'owner': config.owner || ''

@@ -1,7 +1,7 @@
 {
-  "name": "yet-another-wf-discord-bot",
+  "name": "railjack-discord",
   "version": "0.0.1",
-  "description": "Yet another Warframe Discord bot.",
+  "description": "Railjack-focused Warframe Discord bot.",
   "main": "main.js",
   "dependencies": {
     "axios": "^0.21.0",
@@ -25,14 +25,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Friendly0Fire/yet-another-wf-discord-bot.git"
+    "url": "git+https://github.com/Friendly0Fire/railjack-discord.git"
   },
   "author": "FriendlyFire",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/Friendly0Fire/yet-another-wf-discord-bot/issues"
+    "url": "https://github.com/Friendly0Fire/railjack-discord/issues"
   },
-  "homepage": "https://github.com/Friendly0Fire/yet-another-wf-discord-bot#readme",
+  "homepage": "https://github.com/Friendly0Fire/railjack-discord#readme",
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.1",
     "@types/cheerio": "^0.22.23",
