@@ -107,4 +107,5 @@ config.json
 *.db
 test.ts
 
-build
+lib
+dist

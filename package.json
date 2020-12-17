@@ -2,7 +2,25 @@
   "name": "railjack-discord",
   "version": "0.0.1",
   "description": "Railjack-focused Warframe Discord bot.",
-  "main": "main.js",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "ts-node main.ts",
+    "start": "ts-node dist/app.js",
+
+    "build": "ttsc",
+    "package": "ncc build --source-map --license licenses.txt",
+    "all": "npm run build && npm run package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Friendly0Fire/railjack-discord.git"
+  },
+  "author": "FriendlyFire",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Friendly0Fire/railjack-discord/issues"
+  },
+  "homepage": "https://github.com/Friendly0Fire/railjack-discord#readme",
   "dependencies": {
     "axios": "^0.21.0",
     "better-sqlite3": "^7.1.1",
@@ -18,21 +36,6 @@
     "typescript-is": "^0.17.0",
     "uuid": "^8.3.2"
   },
-  "scripts": {
-    "dev": "ts-node main.ts",
-    "start": "ts-node dist/app.js",
-    "build": "ttsc -p ."
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Friendly0Fire/railjack-discord.git"
-  },
-  "author": "FriendlyFire",
-  "license": "GPL-3.0",
-  "bugs": {
-    "url": "https://github.com/Friendly0Fire/railjack-discord/issues"
-  },
-  "homepage": "https://github.com/Friendly0Fire/railjack-discord#readme",
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.1",
     "@types/cheerio": "^0.22.23",
@@ -40,6 +43,7 @@
     "@types/node": "^14.14.11",
     "@types/uuid": "^8.3.0",
     "@types/ws": "^7.4.0",
+    "@vercel/ncc": "^0.25.1",
     "ts-node": "^9.1.1",
     "ttypescript": "^1.5.12",
     "typescript": "^4.1.2"
