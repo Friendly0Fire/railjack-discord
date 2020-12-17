@@ -1,9 +1,9 @@
 import * as Commando from 'discord.js-commando';
 import * as DiscordJS from 'discord.js';
-import { WarframeProfileManager } from './modules/profile';
-import { WarframeGuildManager } from './modules/guild';
+import { WarframeProfileManager } from '../modules/profile';
+import { WarframeGuildManager } from '../modules/guild';
 
-export default class FallbackCommand extends Commando.Command {
+export class FallbackCommand extends Commando.Command {
 
     #profileUrl = /https:\/\/forums\.warframe\.com\/profile\/[0-9]+\-.+\//;
 

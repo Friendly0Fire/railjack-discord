@@ -8,5 +8,7 @@
         "plugins": [
             { "transform": "typescript-is/lib/transform-inline/transformer" }
         ]
-    }
+    },
+    "include": [ "src/**/*" ],
+    "exclude": ["node_modules", "**/*.spec.ts"]
 }
