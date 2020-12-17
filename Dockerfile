@@ -8,6 +8,6 @@ RUN apk add --no-cache --virtual .gyp python make g++ \
     && npm install \
     && apk del .gyp
 
-COPY . .
+COPY build .
 
-CMD [ "node", "main.ts" ]
+CMD [ "node", "main.js" ]
