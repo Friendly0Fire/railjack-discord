@@ -11,7 +11,7 @@
             "runtimeArgs": [
                 "--nolazy",
                 "-r",
-                "ts-node/register/transpile-only"
+                "tts-node"
             ],
             "skipFiles": [
                 "<node_internals>/**"
