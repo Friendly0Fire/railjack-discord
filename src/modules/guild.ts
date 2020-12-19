@@ -55,7 +55,7 @@ export class WarframeGuildManager {
             if(!guildData.enableVerification)
                 return;
 
-            this.applyVerificationSingle(userData, member.guild);
+            this.applyVerificationSingle(userData, member.guild, guildData);
 
             if(!userData.verified)
                 await member.user.send("It appears you have not been validated yet. Please respond with `verify` to begin!");
@@ -66,14 +66,14 @@ export class WarframeGuildManager {
         });
     }
 
-    private async _syncGuildMembers(guild: DiscordJS.Guild) {
+    private async _syncGuildMembers(guild: DiscordJS.Guild, guildData?: IWarframeGuild) {
         const members = await guild.members.fetch();
         members.each(async member => {
             if(member.user.bot || !member.manageable)
                 return;
 
             const userData = WarframeProfileManager.instance.getUserData(member.user);
-            await this.applyVerificationSingle(userData, guild);
+            await this.applyVerificationSingle(userData, guild, guildData);
         });
     }
 
@@ -85,7 +85,7 @@ export class WarframeGuildManager {
         if(guildData == undefined || !guildData.enableVerification)
             return;
 
-        await this._syncGuildMembers(guild);
+        await this._syncGuildMembers(guild, guildData);
     }
 
     getGuildLayout() {
@@ -130,13 +130,14 @@ export class WarframeGuildManager {
             return nick + suffix;
     }
 
-    async applyVerificationSingle(userData: IWarframeProfile, guild: DiscordJS.Guild): Promise<void> {
+    async applyVerificationSingle(userData: IWarframeProfile, guild: DiscordJS.Guild, guildData?: IWarframeGuild): Promise<void> {
         const member = await guild.members.fetch(userData.userId);
 
         if(!member.manageable || member.user.bot)
             return;
 
-        const guildData = this.getGuildData(guild.id);
+        if(guildData === undefined) guildData = this.getGuildData(guild.id);
+
         if(!guildData.enableVerification)
             return;
 
@@ -158,15 +159,19 @@ export class WarframeGuildManager {
         const unverifiedValid = guildData.unverifiedRole !== undefined && roles.has(guildData.unverifiedRole);
 
         if(userData.verified) {
-            await member.roles.add(misc.filterSnowflakes([ guildData.verifiedRole, (<any>guildData)[userData.platform.toLowerCase() + "Role"] as DiscordJS.Snowflake ], roles));
+            const rolesToAdd = [ guildData.verifiedRole, (<any>guildData)[userData.platform.toLowerCase() + "Role"] as DiscordJS.Snowflake ];
+            await member.roles.add(rolesToAdd.filter(x => roles.has(x) && !member.roles.cache.has(x)));
             if(unverifiedValid)
                 await member.roles.remove(guildData.unverifiedRole);
         } else {
             let rolesToRemove = [ guildData.verifiedRole ];
-            for(let roleKey in misc.PlatformsList)
+            for(const roleKey of misc.PlatformsList)
                     rolesToRemove.push((<any>guildData)[roleKey + "Role"]);
-
-            await member.roles.remove(misc.filterSnowflakes(rolesToRemove, roles));
+            const filteredRolesToRemove = rolesToRemove.filter(x => roles.has(x) && member.roles.cache.has(x));
+            if(filteredRolesToRemove.length > 0) {
+                console.log("Removing extraneous roles from user " + member.user.username + "...");
+                await member.roles.remove(filteredRolesToRemove);
+            }
             if(unverifiedValid)
                 await member.roles.add(guildData.unverifiedRole);
         }
@@ -179,7 +184,7 @@ export class WarframeGuildManager {
         guilds.each(async guild => {
             const guildData = this.getGuildData(guild.id);
             if(guildData.enableVerification)
-                await this.applyVerificationSingle(userData, guild);
+                await this.applyVerificationSingle(userData, guild, guildData);
         });
     }
 
@@ -188,7 +193,7 @@ export class WarframeGuildManager {
         if(!guildData.enableVerification)
             return;
 
-        await this._syncGuildMembers(guild);
+        await this._syncGuildMembers(guild, guildData);
     }
 
     async initGuilds(guilds: DiscordJS.Collection<DiscordJS.Snowflake, DiscordJS.Guild>): Promise<void> {

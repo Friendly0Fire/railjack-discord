@@ -51,26 +51,6 @@ export function timeDiff(date1: number | Date, date2: number | Date): string {
     return "`" + timeElements.join(", ") + "`";
 }
 
-export function filterSnowflakes<T = DiscordJS.Snowflake>(snowflakes: Array<T>, coll: DiscordJS.Collection<string, any>): Array<T> {
-    if(coll == null || coll.size === undefined || coll.size == 0)
-        return snowflakes.filter(s => s != null);
-
-    const collectionValueType = Object.prototype.toString.call(coll.values().next().value);
-
-    return snowflakes.filter(function(s) {
-        if(s == null)
-            return false;
-        if(typeof(s) === 'string')
-           return coll.has(s);
-        if(typeof(s) === 'object') {
-            if(Object.prototype.toString.call(s) == collectionValueType)
-                return true;
-        }
-
-        return false;
-    });
-};
-
 declare global {
     interface Object {
         modify(f: (o: Object) => Object): Object;

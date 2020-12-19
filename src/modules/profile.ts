@@ -101,7 +101,8 @@ export class WarframeProfileManager {
     }
 
     getUserData(user: DiscordJS.User): IWarframeProfile {
-        let priorEntry: IWarframeProfile | undefined = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(user.id).modify((x: any) => x.verified = !!x.verified);
+        let priorEntry: IWarframeProfile | undefined = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(user.id);
+        if(priorEntry !== undefined) priorEntry.verified = !!priorEntry.verified;
 
         if(priorEntry !== undefined && priorEntry.verified && (!misc.PlatformsList.includes(priorEntry.platform) || typeof(priorEntry.ign) != "string")) {
             console.warn("User " + user.username + " has a corrupted profile, resetting.");
