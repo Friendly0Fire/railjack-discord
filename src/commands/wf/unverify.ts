@@ -12,6 +12,7 @@ export default class UnverifyCommand extends Commando.Command {
             description: 'Forcibly clears verification status for a user.',
             examples: ['unverify UserABC'],
             guildOnly: false,
+            ownerOnly: true,
             args: [
                 {
                     key: 'user',
