@@ -70,3 +70,14 @@ export function filterSnowflakes<T = DiscordJS.Snowflake>(snowflakes: Array<T>, 
         return false;
     });
 };
+
+declare global {
+    interface Object {
+        modify(f: (o: Object) => Object): Object;
+    }
+}
+
+Object.prototype.modify = function(f: (o: Object) => Object) {
+    f(this);
+    return this;
+}

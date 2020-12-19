@@ -96,20 +96,32 @@ export class WarframeProfileManager {
     unverify(user: DiscordJS.User): void {
         const result = this.db.prepare("DELETE FROM profiles WHERE userId = ?").run(user.id);
 
-        if(result.changes == 0)
+        if(result.changes === 0)
             throw "No user verification was found!";
     }
 
     getUserData(user: DiscordJS.User): IWarframeProfile {
-        const priorEntry: IWarframeProfile = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(user.id);
-        if(priorEntry == undefined) {
+        let priorEntry: IWarframeProfile | undefined = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(user.id).modify((x: any) => x.verified = !!x.verified);
+
+        if(priorEntry !== undefined && priorEntry.verified && (!misc.PlatformsList.includes(priorEntry.platform) || typeof(priorEntry.ign) != "string")) {
+            console.warn("User " + user.username + " has a corrupted profile, resetting.");
+
+            this.db.prepare("DELETE FROM profiles WHERE userId = ?").run(user.id);
+            priorEntry = undefined;
+        }
+
+        if(priorEntry === undefined) {
             const token = uuid.v4();
             this.db.prepare("INSERT INTO profiles VALUES (?, ?, '', '', 0)").run(user.id, token);
 
-            return this.getUserData(user);
+            return {
+                userId: user.id,
+                token: token,
+                ign: "",
+                platform: "",
+                verified: false
+            };
         }
-
-        priorEntry.verified = !!priorEntry.verified;
 
         return priorEntry;
     }
