@@ -48,7 +48,7 @@ export class WarframeGuildManager {
         client.on('guildCreate', (guild: DiscordJS.Guild) => this.initializeGuildData(guild));
 
         client.on('guildMemberAdd', async (member: DiscordJS.GuildMember) => {
-            const userData = WarframeProfileManager.instance.getUserData(member.user.id);
+            const userData = WarframeProfileManager.instance.getUserData(member.user);
             await member.user.send(`Welcome to ${member.guild.name}, ${member}!`);
 
             const guildData = this.getGuildData(member.guild.id);
@@ -66,6 +66,17 @@ export class WarframeGuildManager {
         });
     }
 
+    private async _syncGuildMembers(guild: DiscordJS.Guild) {
+        const members = await guild.members.fetch();
+        members.each(async member => {
+            if(member.user.bot || !member.manageable)
+                return;
+
+            const userData = WarframeProfileManager.instance.getUserData(member.user);
+            await this.applyVerificationSingle(userData, guild);
+        });
+    }
+
     async initializeGuildData(guild: DiscordJS.Guild): Promise<void> {
         const guildData = this.db.prepare("SELECT * FROM guilds WHERE guildId = ?").get(guild.id);
         if(guildData == undefined)
@@ -74,18 +85,7 @@ export class WarframeGuildManager {
         if(guildData == undefined || !guildData.enableVerification)
             return;
 
-        const members = await guild.members.fetch();
-
-        members.each(async member => {
-            if(member.user.bot)
-                return;
-            try {
-                const userData = WarframeProfileManager.instance.getUserData(member.user.id);
-                await this.applyVerificationSingle(userData, guild);
-            } catch(ex) {
-                console.log("Skipping init over non-existent member " + member.nickname + "...");
-            }
-        });
+        await this._syncGuildMembers(guild);
     }
 
     getGuildLayout() {
@@ -172,8 +172,8 @@ export class WarframeGuildManager {
         }
     }
 
-    async applyVerification(userId: DiscordJS.Snowflake, client: DiscordJS.Client): Promise<void> {
-        const userData = WarframeProfileManager.instance.getUserData(userId);
+    async applyVerification(user: DiscordJS.User, client: DiscordJS.Client): Promise<void> {
+        const userData = WarframeProfileManager.instance.getUserData(user);
 
         const guilds = client.guilds.cache;
         guilds.each(async guild => {
@@ -188,12 +188,7 @@ export class WarframeGuildManager {
         if(!guildData.enableVerification)
             return;
 
-        const members = await guild.members.fetch();
-
-        members.each(async member => {
-            const userData = WarframeProfileManager.instance.getUserData(member.user.id);
-            await this.applyVerificationSingle(userData, guild);
-        });
+        await this._syncGuildMembers(guild);
     }
 
     async initGuilds(guilds: DiscordJS.Collection<DiscordJS.Snowflake, DiscordJS.Guild>): Promise<void> {

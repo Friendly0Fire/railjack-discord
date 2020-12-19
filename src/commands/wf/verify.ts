@@ -25,14 +25,14 @@ export default class VerifyCommand extends Commando.Command {
     }
 
     async run(msg: Commando.CommandoMessage, { url }: { url: string }): Promise<DiscordJS.Message | DiscordJS.Message[]> {
-        const token = WarframeProfileManager.instance.generateToken(msg.author.id);
+        const userData = WarframeProfileManager.instance.getUserData(msg.author);
         if(url == '') {
             const baseMessage = stripIndents`
             **Here is how to verify:**
             1. Navigate to the forums: <https://forums.warframe.com/>
             2. At the top right of the page, click on your profile picture.
             3. In the banner, click "Edit Profile".
-            4. Paste the following text inside the text box: \`${token}\`.
+            4. Paste the following text inside the text box: \`${userData.token}\`.
             5. Click "Save".
             6. Copy the URL from your browser and`;
 
@@ -43,8 +43,8 @@ export default class VerifyCommand extends Commando.Command {
         `));
         } else {
             try {
-                await WarframeProfileManager.instance.verifyToken(msg.author.id, url);
-                await WarframeGuildManager.instance.applyVerification(msg.author.id, this.client);
+                await WarframeProfileManager.instance.verifyToken(msg.author, url);
+                await WarframeGuildManager.instance.applyVerification(msg.author, this.client);
                 const baseMessage = "Congratulations, you have been verified! Your nickname has been set accordingly. *You can now remove the code from your profile.*";
                 return msg.direct(baseMessage).catch(() => msg.reply(baseMessage));
             } catch(error) {

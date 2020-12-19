@@ -39,17 +39,6 @@ export class WarframeProfileManager {
         WarframeProfileManager.instance = this;
     }
 
-    generateToken(userId: string): string {
-        const priorEntry: IWarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
-        if(priorEntry != undefined)
-            return priorEntry.token;
-
-        const token = uuid.v4();
-        this.db.prepare("INSERT INTO profiles VALUES (?, ?, '', '', 0)").run(userId, token);
-
-        return token;
-    }
-
     async _loadProfilePage(profileUrl: string): Promise<IWarframeWebsiteProfile> {
         let ret: IWarframeWebsiteProfile = {} as IWarframeWebsiteProfile;
 
@@ -84,8 +73,8 @@ export class WarframeProfileManager {
         return profileUrl.replace("/", "");
     }
 
-    async verifyToken(userId: string, profileUrl: string): Promise<void> {
-        const priorEntry: IWarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(userId);
+    async verifyToken(user: DiscordJS.User, profileUrl: string): Promise<void> {
+        const priorEntry: IWarframeProfile = this.db.prepare("SELECT token FROM profiles WHERE userId = ?").get(user.id);
         if(priorEntry == undefined)
             throw "No token found for user.";
 
@@ -101,13 +90,24 @@ export class WarframeProfileManager {
             "NSW": misc.Platforms.nsw
         };
 
-        this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(platformForumMapping[pageResult.platform], pageResult.username, userId);
+        this.db.prepare("UPDATE profiles SET platform = ?, ign = ?, verified = 1 WHERE userId = ?").run(platformForumMapping[pageResult.platform], pageResult.username, user.id);
     }
 
-    getUserData(userId: string): IWarframeProfile {
-        const priorEntry: IWarframeProfile = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(userId);
-        if(priorEntry == undefined)
-            throw "User does not exist.";
+    unverify(user: DiscordJS.User): void {
+        const result = this.db.prepare("DELETE FROM profiles WHERE userId = ?").run(user.id);
+
+        if(result.changes == 0)
+            throw "No user verification was found!";
+    }
+
+    getUserData(user: DiscordJS.User): IWarframeProfile {
+        const priorEntry: IWarframeProfile = this.db.prepare("SELECT * FROM profiles WHERE userId = ?").get(user.id);
+        if(priorEntry == undefined) {
+            const token = uuid.v4();
+            this.db.prepare("INSERT INTO profiles VALUES (?, ?, '', '', 0)").run(user.id, token);
+
+            return this.getUserData(user);
+        }
 
         priorEntry.verified = !!priorEntry.verified;
 
