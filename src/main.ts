@@ -53,7 +53,10 @@ client.registry
         ['wf', 'Warframe-related commands']
     ])
     .registerDefaults()
-    .registerCommandsIn(path.join(__dirname, 'commands'));
+    .registerCommandsIn({
+        dirname: path.join(__dirname, 'commands'),
+        filter: /^(.+)\.(j|t)s$/
+    });
 client.registry.unknownCommand = new FallbackCommand(client);
 
 (async () => {
