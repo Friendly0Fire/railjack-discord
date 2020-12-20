@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ./dist .
 COPY package*.json ./
 
-RUN apk add --no-cache --virtual .gyp python make g++ \
+RUN apk add --no-cache --virtual .gyp python make g++ tar \
     && npm install \
     && apk del .gyp
 
