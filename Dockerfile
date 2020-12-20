@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY ./dist .
 COPY package*.json ./
-COPY node_modules ./node_modules
+COPY ./node_modules ./
 
 RUN mkdir /app/data
 COPY config.json.template /app/data/
