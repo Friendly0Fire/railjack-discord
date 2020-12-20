@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
-        "target": "es2015",
+        "target": "es2017",
         "moduleResolution": "node",
-        "module": "commonjs",
+        "module": "CommonJS",
         "sourceMap": true,
-        "outDir": "./lib",
+        "outDir": "./dist",
         "rootDir": "./src",
         "strict": true,
         "plugins": [
@@ -12,5 +12,5 @@
         ]
     },
     "include": [ "src/**/*.ts" ],
-    "exclude": [ "node_modules", "**/*.spec.ts", "**/*.test.ts" ]
+    "exclude": [ "node_modules", "**/*.spec.ts", "**/*.test.ts", "data/*" ]
 }

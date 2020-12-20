@@ -4,11 +4,9 @@
   "description": "Railjack-focused Warframe Discord bot.",
   "main": "src/main.ts",
   "scripts": {
-    "clean": "rimraf lib/ && rimraf dist/",
+    "clean": "rimraf dist/",
     "clean-build": "npm run clean && npm run build",
-    "build": "ttsc",
-    "package": "ncc build --source-map --license licenses.txt",
-    "all": "npm run build && npm run package"
+    "build": "ttsc"
   },
   "repository": {
     "type": "git",
