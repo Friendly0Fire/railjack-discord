@@ -3,6 +3,7 @@ import * as DiscordJS from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { WarframeProfileManager } from '../../modules/profile';
 import { WarframeGuildManager } from '../../modules/guild';
+import * as misc from '../../modules/misc';
 
 export default class VerifyCommand extends Commando.Command {
     constructor(client: Commando.CommandoClient) {
@@ -26,7 +27,7 @@ export default class VerifyCommand extends Commando.Command {
 
     async run(msg: Commando.CommandoMessage, { url }: { url: string }): Promise<DiscordJS.Message | DiscordJS.Message[]> {
         const userData = WarframeProfileManager.instance.getUserData(msg.author);
-        if(url == '') {
+        if(url == '' || !misc.validURL(url)) {
             const baseMessage = stripIndents`
             **Here is how to verify:**
             1. Navigate to the forums: <https://forums.warframe.com/>
