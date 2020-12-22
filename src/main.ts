@@ -50,7 +50,8 @@ const client = new Commando.Client({
 // Commando configuration
 client.registry
     .registerGroups([
-        ['wf', 'Warframe-related commands']
+        ['wf', 'Warframe-related commands'],
+        ['general', 'General bot commands']
     ])
     .registerDefaults()
     .registerCommandsIn({
@@ -71,10 +72,6 @@ client.on('debug', x => console.log("Discord.js debug: " + indentedLog(x)));
 const db = bsqlite(path.join(config.dataPath, 'wf.db'), { verbose: x => console.log("SQL statement: " + indentedLog(x)) });
 const profileManager = new WarframeProfileManager(db, client);
 const guildManager = new WarframeGuildManager(db, client);
-//const intrinsicsManager = new WarframeIntrinsicsManager(db);
-//intrinsicsManager.setupClient(client);
-//const tracker = new WarframeTracker(db);
-//tracker.setupClient(client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');
@@ -82,3 +79,5 @@ client.on('ready', () => {
 client.on('error', console.error);
 
 client.login(config.token);
+
+console.log("Gracefully shutting down...");
