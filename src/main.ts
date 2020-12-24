@@ -75,6 +75,7 @@ const guildManager = new WarframeGuildManager(db, client);
 
 client.on('ready', () => {
     console.log('Bot initialized.');
+    client.owners.forEach(u => u.send("Restarted!"));
 });
 client.on('error', console.error);
 
