@@ -92,7 +92,15 @@ export class WarframeLFGManager {
         this.lfg.push(entry);
     }
 
+    private _pruneEntries() {
+        const now = luxon.DateTime.fromJSDate(new Date()).toMillis();
+        this.lfg = this.lfg.filter(e => {
+            return e.interval.end.toMillis() > now;
+        });
+    }
+
     getMatchingEntries(entry: ILFGEntry): Array<ILFGEntry> {
+        this._pruneEntries();
         return this.lfg.filter((e) => {
             if(entry.id == e.id)
                 return false;
@@ -100,5 +108,20 @@ export class WarframeLFGManager {
                 return false;
             return entry.nodes.some(n => e.nodes.some(n2 => n.id == n2.id));
         });
+    }
+
+    getAllEntries(): Array<ILFGEntry> {
+        this._pruneEntries();
+        return this.lfg;
+    }
+
+    removeEntries(member: DiscordJS.GuildMember): number {
+        let newLfg = this.lfg.filter(e => {
+            return e.member.id != member.id;
+        });
+        const diff = this.lfg.length - newLfg.length;
+        this.lfg = newLfg;
+
+        return diff;
     }
 }
