@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/Friendly0Fire/railjack-discord#readme",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "better-sqlite3": "^7.1.1",
     "cheerio": "^1.0.0-rc.3",
     "chroma-js": "^2.1.0",
