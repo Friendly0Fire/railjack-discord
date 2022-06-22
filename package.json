@@ -29,7 +29,7 @@
     "discord.js-commando": "git+https://github.com/discordjs/Commando.git",
     "reflect-metadata": "^0.1.13",
     "sqlite": "^4.0.18",
-    "sqlite3": "^5.0.0",
+    "sqlite3": "^5.0.3",
     "typescript-is": "^0.17.0",
     "uuid": "^8.3.2"
   },
